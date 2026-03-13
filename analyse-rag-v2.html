@@ -316,7 +316,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
   <div class="alert alert-blue">
     <div class="alert-title">→ La recommandation : Scénario B — Convergence</div>
-    <p>Partir de la base opérationnelle de Nicolas (DevOps, error handling, documentation), y intégrer l'architecture multi-agents de Vianney et un vrai moteur vectoriel (Supabase pgvector). Ni repartir de zéro, ni continuer en parallèle.</p>
+    <p>Partir de la base opérationnelle de Nicolas (DevOps, error handling, documentation), y intégrer l'architecture multi-agents de Vianney et un vrai moteur vectoriel (BigQuery VECTOR_SEARCH). Ni repartir de zéro, ni continuer en parallèle.</p>
   </div>
 
   <div class="alert alert-cyan">
@@ -415,7 +415,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
       <ul class="check">
         <li>Architecture multi-agents : Superviseur → Analyseur + Organisationnel (pattern agentTool/toolWorkflow)</li>
         <li>Score de confiance automatique (0–100) par fiche générée</li>
-        <li>Recherche vectorielle BigQuery VECTOR_SEARCH avec Gemini text-embedding-004</li>
+        <li>Recherche vectorielle BigQuery VECTOR_SEARCH avec Gemini text-embedding-004 — infrastructure déjà configurée</li>
         <li>Organisation Drive auto-gérée par l'agent Organisationnel (arborescence 3 niveaux)</li>
         <li>Interface d'alimentation simple (formulaire Airtable pour le technicien)</li>
         <li>Prompts agents très structurés avec séquence obligatoire définie</li>
@@ -561,7 +561,7 @@ if (max_similarity_score &lt; 0.72) {
       <thead><tr><th>Dette</th><th>Projet</th><th>Risque</th><th>Effort</th></tr></thead>
       <tbody>
         <tr><td>Credential placeholder <code>REPLACE_WITH_CREDENTIAL_ID</code> dans rechercher_bible</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">RAG non fonctionnel</span></td><td>1h</td></tr>
-        <tr><td>Pipeline alimentation embeddings BigQuery non connecté</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">Recherche vectorielle inutilisable</span></td><td>1–2 jours</td></tr>
+        <tr><td>Pipeline d'embedding non connecté — BigQuery est prêt, le branchement n8n → Gemini embedding → BigQuery manque</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">RAG vectoriel non fonctionnel</span></td><td>1 jour</td></tr>
         <tr><td>Aucun error handler sur les nœuds HTTP</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">Pertes silencieuses en prod</span></td><td>1 jour</td></tr>
         <tr><td>Pas d'environnement DEV</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-yellow">Chaque modif risque la prod</span></td><td>2h</td></tr>
         <tr><td>Clés API en dur dans les nœuds (sprint 3a)</td><td><span class="pill pill-blue">Nicolas</span></td><td><span class="pill pill-yellow">Sécurité si repo public</span></td><td>2h</td></tr>
@@ -593,8 +593,8 @@ if (max_similarity_score &lt; 0.72) {
       <div>
         <h4>Ce qu'on fait</h4>
         <ul class="check">
-          <li>Remplacer le RAG mots-clés par Supabase pgvector</li>
-          <li>Ajouter un pipeline d'embedding automatique (n8n → Gemini embedding-001 → Supabase)</li>
+          <li>Remplacer le RAG mots-clés par BigQuery VECTOR_SEARCH</li>
+          <li>Ajouter un pipeline d'embedding automatique (n8n → Gemini embedding-001 → BigQuery)</li>
           <li>Chunking sémantique par section (procédure / symptôme / cause)</li>
           <li>Garder toute l'architecture existante</li>
         </ul>
@@ -652,7 +652,7 @@ if (max_similarity_score &lt; 0.72) {
     <div class="grid-2">
       <ul class="check">
         <li>Chunking sémantique par section</li>
-        <li>Supabase pgvector (remplace BigQuery et mots-clés)</li>
+        <li>BigQuery VECTOR_SEARCH (remplace BigQuery et mots-clés)</li>
         <li>Hybrid search BM25 + vectoriel + RRF fusion</li>
       </ul>
       <ul class="check">
@@ -722,8 +722,8 @@ if (max_similarity_score &lt; 0.72) {
         <tr><td>RAISONNEMENT</td><td>Structuration + Q&R</td><td><span class="pill pill-blue">Claude Sonnet 4</span></td><td>Meilleur pour structuration complexe et réponses nuancées</td></tr>
         <tr><td>EMBEDDING (Phase 1)</td><td>Vectorisation texte</td><td><span class="pill pill-green">Gemini text-embedding-001</span></td><td>Stable, production-ready, même écosystème</td></tr>
         <tr><td>EMBEDDING (Phase 2)</td><td>Vectorisation multimodale</td><td><span class="pill pill-cyan">Gemini Embedding 2</span></td><td>Dès GA — cross-modal vidéo+photo+texte</td></tr>
-        <tr><td>VECTOR DB</td><td>Stockage vecteurs</td><td><span class="pill pill-green">Supabase pgvector</span></td><td>SQL + vectoriel, déjà sur roadmap Nicolas, gratuit</td></tr>
-        <tr><td>RETRIEVAL</td><td>Recherche hybride</td><td><span class="pill pill-green">BM25 + pgvector + RRF</span></td><td>Termes exacts + sémantique + fusion — standard RAG prod</td></tr>
+        <tr><td>VECTOR DB</td><td>Stockage vecteurs</td><td><span class="pill pill-green">BigQuery VECTOR_SEARCH</span></td><td>Déjà configuré et utilisé par Vianney — pas de nouveau service à déployer</td></tr>
+        <tr><td>RETRIEVAL</td><td>Recherche hybride</td><td><span class="pill pill-green">BigQuery fulltext + VECTOR_SEARCH + RRF</span></td><td>BigQuery supporte les deux nativement — hybrid search sans infrastructure supplémentaire</td></tr>
         <tr><td>RERANKING</td><td>Re-classement</td><td><span class="pill pill-yellow">Cohere Rerank v3</span></td><td>API simple, meilleur reranker du marché, $1/1M tokens</td></tr>
         <tr><td>DONNÉES STRUCTURÉES</td><td>Base opérationnelle</td><td><span class="pill pill-blue">Airtable</span></td><td>Interface technicien existante, conserver</td></tr>
         <tr><td>FICHIERS</td><td>Stockage médias</td><td><span class="pill pill-blue">Google Drive</span></td><td>Organisation auto-gérée (pattern Vianney)</td></tr>
@@ -733,9 +733,13 @@ if (max_similarity_score &lt; 0.72) {
     </table>
   </div>
 
+  <div class="alert alert-green" style="margin-top:8px;">
+    <div class="alert-title">✓ BigQuery déjà configuré — avantage décisif</div>
+    <p>BigQuery VECTOR_SEARCH est déjà opérationnel et utilisé par Vianney. Le problème identifié n'est pas le choix de BigQuery — c'est que le <strong>pipeline d'alimentation des embeddings n'est pas connecté</strong>. On conserve BigQuery et on branche le pipeline. Zéro nouvelle infrastructure à déployer.</p>
+  </div>
   <div class="alert alert-yellow" style="margin-top:8px;">
     <div class="alert-title">Ce qu'on n'utilise pas — et pourquoi</div>
-    <p><strong>BigQuery VECTOR_SEARCH :</strong> surdimensionné pour &lt;10 000 chunks, coûteux, pipeline cassé — remplacé par Supabase pgvector. &nbsp;|&nbsp; <strong>LangGraph / CrewAI :</strong> complexité sans bénéfice à cette échelle. &nbsp;|&nbsp; <strong>Fine-tuning LLM :</strong> inutile avant d'avoir un RAG qui fonctionne. &nbsp;|&nbsp; <strong>Pinecone / Weaviate managed :</strong> Supabase couvre largement &lt;100 000 chunks.</p>
+    <p><strong>BigQuery VECTOR_SEARCH :</strong> inutile puisque BigQuery est déjà en place. &nbsp;|&nbsp; <strong>LangGraph / CrewAI :</strong> complexité sans bénéfice à cette échelle. &nbsp;|&nbsp; <strong>Fine-tuning LLM :</strong> inutile avant d'avoir un RAG qui fonctionne. &nbsp;|&nbsp; <strong>Pinecone / Weaviate managed :</strong> BigQuery couvre largement le volume actuel.</p>
   </div>
 </section>
 
@@ -771,7 +775,7 @@ if (max_similarity_score &lt; 0.72) {
         <div class="arch-arrow">→</div>
         <div class="arch-node arch-node-cyan">🔢 Gemini Embedding</div>
         <div class="arch-arrow">→</div>
-        <div class="arch-node arch-node-green">🗄 Supabase pgvector</div>
+        <div class="arch-node arch-node-green">🗄 BigQuery VECTOR_SEARCH</div>
       </div>
       <div class="arch-row arch-indent">
         <div class="arch-arrow">├──</div>
@@ -803,7 +807,7 @@ if (max_similarity_score &lt; 0.72) {
       </div>
       <div class="arch-row arch-indent">
         <div class="arch-arrow">→</div>
-        <div class="arch-node arch-node-green">🗄 Supabase</div>
+        <div class="arch-node arch-node-green">🗄 BigQuery</div>
         <div class="arch-node arch-node-gray" style="font-size:11px;">VECTOR cosine</div>
         <div class="arch-arrow">+</div>
         <div class="arch-node arch-node-gray" style="font-size:11px;">BM25 fulltext</div>
@@ -840,7 +844,7 @@ if (max_similarity_score &lt; 0.72) {
         <div class="arch-arrow">→</div>
         <div class="arch-node arch-node-cyan">gemini-embedding-2</div>
         <div class="arch-arrow">→</div>
-        <div class="arch-node arch-node-green">Supabase pgvector (table v2)</div>
+        <div class="arch-node arch-node-green">BigQuery VECTOR_SEARCH (table v2)</div>
       </div>
       <div class="arch-row">
         <div class="arch-node arch-node-gray">🎥 Vidéo brute</div>
@@ -861,7 +865,7 @@ if (max_similarity_score &lt; 0.72) {
 
   <div class="alert alert-blue" style="margin-top:8px;">
     <div class="alert-title">Stratégie de migration sans big bang</div>
-    <p>Supabase pgvector supporte plusieurs tables indépendantes. Phase 1 (text-embedding-001) et Phase 2 (Embedding 2) coexistent pendant la migration. On bascule progressivement sans jamais couper la production.</p>
+    <p>BigQuery VECTOR_SEARCH supporte plusieurs tables indépendantes. Phase 1 (text-embedding-001) et Phase 2 (Embedding 2) coexistent pendant la migration. On bascule progressivement sans jamais couper la production.</p>
   </div>
 </section>
 
@@ -922,7 +926,7 @@ if (max_similarity_score &lt; 0.72) {
 
   <div class="alert alert-blue">
     <div class="alert-title">→ Décision recommandée</div>
-    <p><strong>Ne pas l'utiliser aujourd'hui.</strong> Les limites médias (128s vidéo, 6 pages PDF) sont trop contraignantes pour les cas d'usage réels. <strong>L'architecture à poser maintenant doit anticiper la migration :</strong> tables Supabase avec colonne <code>embedding_model_version</code>, pour basculer progressivement sans casser la prod dès que le modèle passe GA.</p>
+    <p><strong>Ne pas l'utiliser aujourd'hui.</strong> Les limites médias (128s vidéo, 6 pages PDF) sont trop contraignantes pour les cas d'usage réels. <strong>L'architecture à poser maintenant doit anticiper la migration :</strong> tables BigQuery avec colonne <code>embedding_model_version</code>, pour basculer progressivement sans casser la prod dès que le modèle passe GA.</p>
   </div>
 </section>
 
@@ -1038,11 +1042,11 @@ if (max_similarity_score &lt; 0.72) {
     <table>
       <thead><tr><th>Sprint</th><th>Titre</th><th>Livrable</th><th>Durée</th><th>Priorité</th></tr></thead>
       <tbody>
-        <tr class="sprint-row-p1"><td>RAG-1</td><td>Supabase pgvector — setup schéma + pipeline d'embedding</td><td>Table <code>chunks</code> opérationnelle + n8n → embedding-001 → Supabase</td><td>2 jours</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p1"><td>RAG-1</td><td>BigQuery VECTOR_SEARCH — setup schéma + pipeline d'embedding</td><td>Table <code>chunks</code> opérationnelle + n8n → embedding-001 → BigQuery</td><td>2 jours</td><td><span class="pill pill-red">P1</span></td></tr>
         <tr class="sprint-row-p1"><td>RAG-2</td><td>Chunking sémantique des fiches existantes</td><td>Code node : 1 fiche → N chunks (titre / procédure / symptômes / causes / matériel)</td><td>1 jour</td><td><span class="pill pill-red">P1</span></td></tr>
-        <tr class="sprint-row-p1"><td>RAG-3</td><td>Remplacement du RAG mots-clés de Nicolas par Supabase pgvector</td><td>Bot Nicolas utilise le retrieval vectoriel</td><td>1 jour</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p1"><td>RAG-3</td><td>Remplacement du RAG mots-clés de Nicolas par BigQuery VECTOR_SEARCH</td><td>Bot Nicolas utilise le retrieval vectoriel</td><td>1 jour</td><td><span class="pill pill-red">P1</span></td></tr>
         <tr class="sprint-row-p1"><td>RAG-4</td><td>Golden dataset 20 questions + évaluation initiale</td><td>Fichier JSON de référence + score de base mesuré</td><td>2h (humain)</td><td><span class="pill pill-red">P1</span></td></tr>
-        <tr class="sprint-row-p2"><td>RAG-5</td><td>Hybrid search BM25 + vectoriel + fusion RRF</td><td>Requête Supabase avec fulltext + vecteur + reranking RRF</td><td>1 jour</td><td><span class="pill pill-yellow">P2</span></td></tr>
+        <tr class="sprint-row-p2"><td>RAG-5</td><td>Hybrid search BM25 + vectoriel + fusion RRF</td><td>Requête BigQuery avec fulltext + vecteur + reranking RRF</td><td>1 jour</td><td><span class="pill pill-yellow">P2</span></td></tr>
         <tr class="sprint-row-p2"><td>RAG-6</td><td>Seuil de confiance + réponse "je ne sais pas"</td><td>Score similarity &lt; 0.72 → message de redirection</td><td>2h</td><td><span class="pill pill-yellow">P2</span></td></tr>
         <tr class="sprint-row-p2"><td>RAG-7</td><td>Intégration architecture agents Vianney dans pipeline Nicolas</td><td>Pattern agentTool Superviseur → Analyseur dans workflow Nicolas</td><td>2 jours</td><td><span class="pill pill-yellow">P2</span></td></tr>
       </tbody>
@@ -1056,9 +1060,9 @@ if (max_similarity_score &lt; 0.72) {
       <tbody>
         <tr class="sprint-row-p2"><td>Q-1</td><td>Feedback 👍/👎 Telegram — capture + stockage</td><td>Bouton feedback + table Airtable Feedbacks</td><td>1 jour</td></tr>
         <tr class="sprint-row-p2"><td>Q-2</td><td>Monitoring — alerte Telegram si pipeline échoue 2×</td><td>Sprint Bot-Mon Nicolas</td><td>1 jour</td></tr>
-        <tr class="sprint-row-p2"><td>Q-3</td><td>Reranking Cohere Rerank v3 (post hybrid search)</td><td>Appel Cohere API après top-20 Supabase</td><td>1 jour</td></tr>
+        <tr class="sprint-row-p2"><td>Q-3</td><td>Reranking Cohere Rerank v3 (post hybrid search)</td><td>Appel Cohere API après top-20 BigQuery</td><td>1 jour</td></tr>
         <tr class="sprint-row-p3"><td>Q-4</td><td>Score confiance Vianney intégré dans Airtable commun</td><td>Champ score 0–100 dans fiches Nicolas + Vianney</td><td>2h</td></tr>
-        <tr class="sprint-row-p3"><td>GE-1</td><td>Veille Gemini Embedding 2 GA — migration table Supabase v2</td><td>Table chunks_v2 + re-embedding cross-modal</td><td>TBD</td></tr>
+        <tr class="sprint-row-p3"><td>GE-1</td><td>Veille Gemini Embedding 2 GA — migration table BigQuery v2</td><td>Table chunks_v2 + re-embedding cross-modal</td><td>TBD</td></tr>
       </tbody>
     </table>
   </div>
@@ -1082,8 +1086,8 @@ if (max_similarity_score &lt; 0.72) {
     <div class="step">
       <div class="step-num">2</div>
       <div class="step-body">
-        <h3>Choisir Supabase comme vector DB commune</h3>
-        <p>Remplacement de BigQuery (Vianney) et du RAG mots-clés (Nicolas) par Supabase pgvector. Instance unique, partagée, ou deux instances séparées par usage ? Supabase Free tier suffit pour &lt;500MB de vecteurs (~200 000 chunks).</p>
+        <h3>Choisir BigQuery comme vector DB commune</h3>
+        <p>Remplacement de BigQuery (Vianney) et du RAG mots-clés (Nicolas) par BigQuery VECTOR_SEARCH. Instance unique, partagée, ou deux instances séparées par usage ? BigQuery Free tier suffit pour &lt;500MB de vecteurs (~200 000 chunks).</p>
       </div>
     </div>
     <div class="step">
