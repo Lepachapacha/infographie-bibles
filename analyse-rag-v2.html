@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyse & Recommandations RAG v2 — Bibles Techniques</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0e16;
+  --surface: #13161f;
+  --surface2: #1a1d2a;
+  --border: #252836;
+  --border2: #2e3245;
+  --text: #e2e4ed;
+  --text2: #9ca3af;
+  --text3: #6b7280;
+  --blue: #3b82f6;
+  --blue-dim: #1d3a6b;
+  --blue-light: #60a5fa;
+  --purple: #8b5cf6;
+  --purple-dim: #2e1a5e;
+  --purple-light: #a78bfa;
+  --green: #10b981;
+  --green-dim: #0d2b1a;
+  --green-light: #34d399;
+  --yellow: #f59e0b;
+  --yellow-dim: #2b2000;
+  --yellow-light: #fbbf24;
+  --red: #ef4444;
+  --red-dim: #2b0d0d;
+  --red-light: #f87171;
+  --cyan: #06b6d4;
+  --cyan-dim: #0c2a33;
+  --cyan-light: #67e8f9;
+  --nav-width: 240px;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── NAV ── */
+.nav {
+  position: fixed; top: 0; left: 0;
+  width: var(--nav-width); height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 0;
+  z-index: 100;
+}
+.nav-logo {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.nav-logo .eyebrow { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.nav-logo .title { font-size: 13px; font-weight: 700; color: var(--text); }
+.nav-section { padding: 6px 20px 2px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-top: 12px; }
+.nav a {
+  display: block; padding: 7px 20px;
+  font-size: 12px; color: var(--text2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all .15s;
+}
+.nav a:hover { color: var(--text); background: var(--surface2); border-left-color: var(--border2); }
+.nav a.active { color: var(--blue-light); border-left-color: var(--blue); background: rgba(59,130,246,.08); }
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--nav-width);
+  padding: 48px 56px;
+  max-width: calc(var(--nav-width) + 900px);
+}
+
+/* ── SECTIONS ── */
+section { margin-bottom: 72px; scroll-margin-top: 32px; }
+.section-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+h1 { font-size: 32px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; margin-top: 20px; }
+h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 8px; margin-top: 16px; }
+p { font-size: 13.5px; color: var(--text2); margin-bottom: 12px; line-height: 1.7; }
+.lead { font-size: 15px; color: var(--text); line-height: 1.7; }
+
+/* ── HEADER ── */
+.doc-header { margin-bottom: 56px; padding-bottom: 40px; border-bottom: 1px solid var(--border); }
+.doc-header .meta { display: flex; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+.doc-header .meta-item { font-size: 12px; color: var(--text3); }
+.doc-header .meta-item strong { color: var(--text2); }
+
+/* ── ALERT BOXES ── */
+.alert {
+  border-radius: 10px; padding: 16px 20px; margin: 20px 0;
+  border-left: 3px solid;
+}
+.alert-blue { background: rgba(59,130,246,.07); border-color: var(--blue); }
+.alert-green { background: rgba(16,185,129,.07); border-color: var(--green); }
+.alert-yellow { background: rgba(245,158,11,.07); border-color: var(--yellow); }
+.alert-red { background: rgba(239,68,68,.07); border-color: var(--red); }
+.alert-purple { background: rgba(139,92,246,.07); border-color: var(--purple); }
+.alert-cyan { background: rgba(6,182,212,.07); border-color: var(--cyan); }
+.alert-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.alert-blue .alert-title { color: var(--blue-light); }
+.alert-green .alert-title { color: var(--green-light); }
+.alert-yellow .alert-title { color: var(--yellow-light); }
+.alert-red .alert-title { color: var(--red-light); }
+.alert-purple .alert-title { color: var(--purple-light); }
+.alert-cyan .alert-title { color: var(--cyan-light); }
+.alert p { margin: 0; font-size: 13px; }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+.card-blue { border-top: 2px solid var(--blue); }
+.card-purple { border-top: 2px solid var(--purple); }
+.card-green { border-top: 2px solid var(--green); }
+.card-yellow { border-top: 2px solid var(--yellow); }
+.card-cyan { border-top: 2px solid var(--cyan); }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 20px 0; }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); }
+thead th { padding: 12px 16px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); text-align: left; border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 11px 16px; font-size: 12.5px; color: var(--text2); vertical-align: middle; }
+td:first-child { color: var(--text3); font-size: 11px; font-weight: 600; letter-spacing: .5px; }
+
+/* ── PILLS ── */
+.pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.pill-green  { background: var(--green-dim); color: var(--green-light); }
+.pill-yellow { background: var(--yellow-dim); color: var(--yellow-light); }
+.pill-red    { background: var(--red-dim); color: var(--red-light); }
+.pill-blue   { background: var(--blue-dim); color: var(--blue-light); }
+.pill-purple { background: var(--purple-dim); color: var(--purple-light); }
+.pill-gray   { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.pill-cyan   { background: var(--cyan-dim); color: var(--cyan-light); }
+
+/* ── CODE ── */
+pre {
+  background: #080a10; border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px 20px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px; color: #c9d1d9;
+  overflow-x: auto; margin: 16px 0;
+  line-height: 1.6;
+}
+code { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--blue-light); }
+
+/* ── TIMELINE / STEPS ── */
+.steps { margin: 20px 0; }
+.step { display: flex; gap: 16px; margin-bottom: 20px; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue-dim); color: var(--blue-light);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+.step-num-green { background: var(--green-dim); color: var(--green-light); }
+.step-num-purple { background: var(--purple-dim); color: var(--purple-light); }
+.step-body h3 { margin-top: 0; }
+
+/* ── SCORE BAND ── */
+.score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.score-label { font-size: 12px; color: var(--text2); width: 180px; flex-shrink: 0; }
+.score-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+.score-bar { height: 100%; border-radius: 4px; }
+.score-val { font-size: 11px; font-weight: 700; width: 36px; text-align: right; }
+
+/* ── LIST ── */
+ul.check { list-style: none; margin: 10px 0 16px; }
+ul.check li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 4px 0; }
+ul.check li::before { content: "✓"; color: var(--green-light); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+ul.cross { list-style: none; margin: 10px 0 16px; }
+ul.cross li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 4px 0; }
+ul.cross li::before { content: "✗"; color: var(--red-light); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+ul.warn { list-style: none; margin: 10px 0 16px; }
+ul.warn li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 4px 0; }
+ul.warn li::before { content: "⚠"; color: var(--yellow-light); flex-shrink: 0; margin-top: 1px; }
+ul.dot { list-style: none; margin: 8px 0 14px; }
+ul.dot li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 3px 0; }
+ul.dot li::before { content: "·"; color: var(--text3); font-size: 18px; line-height: 1.2; flex-shrink: 0; }
+
+/* ── SCENARIO BADGE ── */
+.scenario-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.scenario-badge { font-size: 18px; font-weight: 900; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.badge-a { background: rgba(59,130,246,.15); color: var(--blue-light); }
+.badge-b { background: rgba(16,185,129,.15); color: var(--green-light); }
+.badge-c { background: rgba(139,92,246,.15); color: var(--purple-light); }
+.scenario-meta { }
+.scenario-title { font-size: 16px; font-weight: 700; color: #fff; }
+.scenario-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* ── ARCH DIAGRAM ── */
+.arch {
+  background: #080a10; border: 1px solid var(--border);
+  border-radius: 10px; padding: 24px;
+  margin: 20px 0;
+}
+.arch-flow { display: flex; flex-direction: column; gap: 8px; }
+.arch-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.arch-node {
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.arch-node-blue { background: var(--blue-dim); color: var(--blue-light); border: 1px solid rgba(59,130,246,.3); }
+.arch-node-green { background: var(--green-dim); color: var(--green-light); border: 1px solid rgba(16,185,129,.3); }
+.arch-node-purple { background: var(--purple-dim); color: var(--purple-light); border: 1px solid rgba(139,92,246,.3); }
+.arch-node-yellow { background: var(--yellow-dim); color: var(--yellow-light); border: 1px solid rgba(245,158,11,.3); }
+.arch-node-cyan { background: var(--cyan-dim); color: var(--cyan-light); border: 1px solid rgba(6,182,212,.3); }
+.arch-node-gray { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.arch-arrow { color: var(--text3); font-size: 16px; }
+.arch-indent { padding-left: 32px; }
+.arch-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+
+/* ── SPRINT TABLE ── */
+.sprint-row-p1 td:first-child { border-left: 3px solid var(--red); }
+.sprint-row-p2 td:first-child { border-left: 3px solid var(--yellow); }
+.sprint-row-p3 td:first-child { border-left: 3px solid var(--green); }
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* ── FOOTER ── */
+.doc-footer { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 48px; font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; }
+
+/* ── PRINT ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .nav { display: none; }
+  .main { margin-left: 0; padding: 32px; }
+  section { page-break-inside: avoid; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .nav { display: none; }
+  .main { margin-left: 0; padding: 24px 20px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="eyebrow">Bibles Techniques</div>
+    <div class="title">Analyse RAG v2 — Mars 2026</div>
+  </div>
+  <div class="nav-section">Vue d'ensemble</div>
+  <a href="#resume">Résumé exécutif</a>
+  <a href="#etat">État des lieux</a>
+  <a href="#comparatif">Comparatif technique</a>
+  <div class="nav-section">Diagnostic</div>
+  <a href="#manque">Ce qui manque aux deux</a>
+  <a href="#dette">Dette technique</a>
+  <div class="nav-section">Recommandations</div>
+  <a href="#scenarios">3 scénarios</a>
+  <a href="#stack">Stack recommandée</a>
+  <a href="#architecture">Architecture cible</a>
+  <div class="nav-section">Opportunités</div>
+  <a href="#gemini2">Gemini Embedding 2</a>
+  <a href="#externes">Solutions externes</a>
+  <div class="nav-section">Action</div>
+  <a href="#sprints">Plan de sprints</a>
+  <a href="#decision">Décision à prendre</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- HEADER -->
+<div class="doc-header" id="top">
+  <div class="section-label">Document de travail — Confidentiel</div>
+  <h1>Bibles Techniques<br>Vers un RAG unifié de production</h1>
+  <p class="lead">Analyse comparative des deux projets, diagnostic des lacunes communes, recommandations d'architecture et plan de sprints pour une convergence vers une infrastructure IA de production.</p>
+  <div class="meta">
+    <div class="meta-item"><strong>Date :</strong> 13 mars 2026</div>
+    <div class="meta-item"><strong>Projets :</strong> Bible Technique Nicolas (torréfaction) · Bible Technique Vianney (distributeurs Bibal)</div>
+    <div class="meta-item"><strong>Objet :</strong> Préparation sprint commun</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 1 — RÉSUMÉ EXÉCUTIF -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="resume">
+  <div class="section-label">Section 1</div>
+  <h2>Résumé exécutif</h2>
+  <p>Cinq points à retenir avant de lire la suite.</p>
+
+  <div class="alert alert-green">
+    <div class="alert-title">✓ Ce qui a été réussi</div>
+    <p>Les deux projets ont résolu le problème difficile : capturer de la connaissance technique multimodale (vidéo, photo, audio, PDF) et la rendre interrogeable en langage naturel. C'est le cœur du problème, et il est résolu dans les deux cas. Le reste est de l'ingénierie.</p>
+  </div>
+
+  <div class="alert alert-yellow">
+    <div class="alert-title">⚠ Les deux projets sont des POCs qui atteignent leurs limites</div>
+    <p>Nicolas est en production avec 48 fiches — le RAG par mots-clés commence à saturer. Vianney a une architecture plus avancée mais aucun filet de sécurité ni pipeline d'alimentation opérationnel. Aucun des deux n'a de mesure de qualité des réponses.</p>
+  </div>
+
+  <div class="alert alert-blue">
+    <div class="alert-title">→ La recommandation : Scénario B — Convergence</div>
+    <p>Partir de la base opérationnelle de Nicolas (DevOps, error handling, documentation), y intégrer l'architecture multi-agents de Vianney et un vrai moteur vectoriel (Supabase pgvector). Ni repartir de zéro, ni continuer en parallèle.</p>
+  </div>
+
+  <div class="alert alert-cyan">
+    <div class="alert-title">⚡ Opportunité externe : Gemini Embedding 2 (sorti le 10/03/2026)</div>
+    <p>Premier modèle d'embedding nativement multimodal — vidéo, photo, audio, texte dans le même espace vectoriel. Pas encore en production (Preview), mais l'architecture à poser aujourd'hui doit anticiper cette migration.</p>
+  </div>
+
+  <div class="alert alert-purple">
+    <div class="alert-title">→ Le levier de qualité n°1 (souvent ignoré)</div>
+    <p>Le chunking sémantique — découper les fiches par section (procédure / symptôme / cause) plutôt qu'une fiche = un vecteur — est la modification qui améliorera le plus la qualité des réponses. Avant même le choix du LLM.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 2 — ÉTAT DES LIEUX -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="etat">
+  <div class="section-label">Section 2</div>
+  <h2>État des lieux</h2>
+
+  <div class="grid-2">
+    <!-- NICOLAS -->
+    <div class="card card-blue">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#1d3a6b;color:#60a5fa;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">N</div>
+        <div>
+          <div style="font-weight:700;color:#fff;font-size:14px;">Bible Technique Nicolas</div>
+          <div style="font-size:11px;color:var(--text3);">Usine de Torréfaction · Petroncini BIBAL Av12</div>
+        </div>
+        <span class="pill pill-green" style="margin-left:auto;">En production</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;">
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--blue-light);">48</div>
+          <div style="font-size:10px;color:var(--text3);">Fiches</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--blue-light);">196</div>
+          <div style="font-size:10px;color:var(--text3);">Médias traités</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--blue-light);">15+</div>
+          <div style="font-size:10px;color:var(--text3);">Sprints</div>
+        </div>
+      </div>
+
+      <h4>Points forts</h4>
+      <ul class="check">
+        <li>Pipeline ingestion multimodale éprouvé (vidéo HEVC, photos, texte seul)</li>
+        <li>Gestion d'erreur robuste — <code>onError: continueErrorOutput</code> sur tous les nœuds HTTP critiques</li>
+        <li>Architecture 2 passes Claude (anti-troncature sur dossiers multi-médias)</li>
+        <li>PROD/DEV séparés + scripts de promotion automatisés</li>
+        <li>Documentation exhaustive (7 fichiers MD, 25+ bugs documentés avec cause racine)</li>
+        <li>Analytics de lacunes automatiques (<code>a_documenter</code>, <code>machine_detectee</code>)</li>
+        <li>Mémoire conversationnelle Telegram (contexte de session)</li>
+        <li>Méthode de développement formalisée et réutilisable</li>
+      </ul>
+
+      <h4>Limites actuelles</h4>
+      <ul class="warn">
+        <li>RAG par mots-clés : GET ALL fiches → filtre → Claude. Limite réelle ~70 fiches avant dégradation</li>
+        <li>Zéro chunking : 1 fiche = 1 bloc, perte de précision au retrieval</li>
+        <li>Aucune mesure de qualité des réponses</li>
+        <li>Clés API en dur dans les nœuds (sprint 3a planifié)</li>
+      </ul>
+    </div>
+
+    <!-- VIANNEY -->
+    <div class="card card-purple">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:#2e1a5e;color:#a78bfa;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">V</div>
+        <div>
+          <div style="font-weight:700;color:#fff;font-size:14px;">Bible Technique Vianney</div>
+          <div style="font-size:11px;color:var(--text3);">Distributeurs Bibal · Café · Snack · Fontaine</div>
+        </div>
+        <span class="pill pill-purple" style="margin-left:auto;">Architecture posée</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;">
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--purple-light);">3</div>
+          <div style="font-size:10px;color:var(--text3);">Agents IA</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--purple-light);">6</div>
+          <div style="font-size:10px;color:var(--text3);">Workflows n8n</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:20px;font-weight:800;color:var(--purple-light);">4</div>
+          <div style="font-size:10px;color:var(--text3);">Types médias</div>
+        </div>
+      </div>
+
+      <h4>Points forts</h4>
+      <ul class="check">
+        <li>Architecture multi-agents : Superviseur → Analyseur + Organisationnel (pattern agentTool/toolWorkflow)</li>
+        <li>Score de confiance automatique (0–100) par fiche générée</li>
+        <li>Recherche vectorielle BigQuery VECTOR_SEARCH avec Gemini text-embedding-004</li>
+        <li>Organisation Drive auto-gérée par l'agent Organisationnel (arborescence 3 niveaux)</li>
+        <li>Interface d'alimentation simple (formulaire Airtable pour le technicien)</li>
+        <li>Prompts agents très structurés avec séquence obligatoire définie</li>
+      </ul>
+
+      <h4>Risques critiques</h4>
+      <ul class="cross">
+        <li>Aucun error handler — toute erreur interrompt le pipeline silencieusement</li>
+        <li>Pipeline d'alimentation embeddings BigQuery non connecté (RAG non fonctionnel)</li>
+        <li>Aucun environnement DEV — toute modification risque la production</li>
+        <li>Zéro documentation — dépendance totale à la mémoire humaine</li>
+        <li>Credential placeholder <code>REPLACE_WITH_CREDENTIAL_ID</code> encore en place dans le tool rechercher_bible</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 3 — COMPARATIF TECHNIQUE -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="comparatif">
+  <div class="section-label">Section 3</div>
+  <h2>Comparatif technique détaillé</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th style="color:var(--blue-light);">Nicolas</th>
+          <th style="color:var(--purple-light);">Vianney</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>STATUT</td><td><span class="pill pill-green">Production — v1.0 stable</span></td><td><span class="pill pill-purple">Architecture posée, non déployée</span></td></tr>
+        <tr><td>PARADIGME IA</td><td><span class="pill pill-blue">Pipeline 2 modèles (Gemini + Claude)</span></td><td><span class="pill pill-purple">Multi-agents hiérarchiques (LangChain n8n)</span></td></tr>
+        <tr><td>INGESTION MÉDIAS</td><td><span class="pill pill-green">Gemini Files API + polling + retry HEVC</span></td><td><span class="pill pill-green">Gemini binary direct — PDF, image, vidéo, audio</span></td></tr>
+        <tr><td>RETRIEVAL</td><td><span class="pill pill-yellow">Mots-clés · limite ~70 fiches</span></td><td><span class="pill pill-yellow">Vectoriel BigQuery · pipeline embeddings cassé</span></td></tr>
+        <tr><td>CHUNKING</td><td><span class="pill pill-red">Absent — 1 fiche = 1 bloc</span></td><td><span class="pill pill-red">Absent — 1 fiche = 1 vecteur</span></td></tr>
+        <tr><td>GESTION D'ERREUR</td><td><span class="pill pill-green">Handlers sur tous les nœuds critiques</span></td><td><span class="pill pill-red">Absente</span></td></tr>
+        <tr><td>ENVIRONNEMENT DEV</td><td><span class="pill pill-green">PROD / DEV séparés + scripts promotion</span></td><td><span class="pill pill-red">Workflow unique</span></td></tr>
+        <tr><td>DOCUMENTATION</td><td><span class="pill pill-green">7 fichiers MD + méthode de travail</span></td><td><span class="pill pill-red">Absente</span></td></tr>
+        <tr><td>MÉMOIRE BOT</td><td><span class="pill pill-green">Session conversationnelle Airtable</span></td><td><span class="pill pill-gray">Non implémentée</span></td></tr>
+        <tr><td>SUPPORT VOCAL</td><td><span class="pill pill-green">Telegram + Gemini Speech</span></td><td><span class="pill pill-yellow">Prévu, non intégré</span></td></tr>
+        <tr><td>ANALYTICS LACUNES</td><td><span class="pill pill-green">Automatiques (a_documenter)</span></td><td><span class="pill pill-gray">Absentes</span></td></tr>
+        <tr><td>SCORE CONFIANCE</td><td><span class="pill pill-gray">Absent</span></td><td><span class="pill pill-green">0–100 par fiche (Superviseur)</span></td></tr>
+        <tr><td>ORGANISATION FICHIERS</td><td><span class="pill pill-yellow">Drive — nommage slug + record_id</span></td><td><span class="pill pill-green">Drive auto-géré par agent Organisationnel</span></td></tr>
+        <tr><td>ÉVALUATION QUALITÉ</td><td><span class="pill pill-red">Inexistante</span></td><td><span class="pill pill-red">Inexistante</span></td></tr>
+        <tr><td>FEEDBACK OPÉRATEUR</td><td><span class="pill pill-yellow">Planifié (sprint Bot-Feedback)</span></td><td><span class="pill pill-gray">Non prévu</span></td></tr>
+        <tr><td>ÉVOLUTIVITÉ INFRA</td><td><span class="pill pill-green">Très élevée — méthode propre</span></td><td><span class="pill pill-yellow">Bonne architecture, pas de méthode</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 4 — CE QUI MANQUE AUX DEUX -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="manque">
+  <div class="section-label">Section 4</div>
+  <h2>Ce qui manque aux deux projets</h2>
+  <p>Ces lacunes sont communes aux deux systèmes. Elles définissent l'agenda du RAG v2.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>🔪 Chunking sémantique</h3>
+      <p style="font-size:12px;">Actuellement, une fiche complète = un seul vecteur ou un seul bloc envoyé au LLM. C'est la première cause de mauvaise réponse : si la question porte sur les symptômes, le système retrouve des fiches entières au lieu du paragraphe "symptômes" exact.</p>
+      <p style="font-size:12px;"><strong style="color:var(--green-light);">Impact estimé :</strong> +30–50% de précision au retrieval, documenté dans la littérature RAG.</p>
+      <pre style="font-size:11px;">// Structure cible par fiche
+{
+  chunk_id: "fiche_42_symptomes",
+  fiche_id: "rec...",
+  section: "symptomes",
+  machine: "Av12",
+  type: "Panne",
+  contenu: "Bruit anormal au démarrage...",
+  vecteur: [0.12, -0.04, ...]
+}</pre>
+    </div>
+
+    <div class="card">
+      <h3>📊 Évaluation de la qualité</h3>
+      <p style="font-size:12px;">Aucun système ne mesure si ses réponses sont bonnes. Sans évaluation, chaque sprint est une amélioration dans le vide — on ne sait pas si on régresse ou si on progresse.</p>
+      <p style="font-size:12px;"><strong style="color:var(--yellow-light);">Minimum viable :</strong> un "golden dataset" de 20–30 questions réelles avec réponses de référence, testé à chaque sprint (30 min de travail, impact permanent).</p>
+      <ul class="dot">
+        <li>Faithfulness — la réponse est-elle fondée sur les fiches ?</li>
+        <li>Relevancy — les chunks récupérés sont-ils pertinents ?</li>
+        <li>Answer quality — LLM-as-judge sur les réponses</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🔍 Hybrid Search</h3>
+      <p style="font-size:12px;">La recherche vectorielle seule rate les termes exacts : "erreur E47", "Av12", "roulement référence 6205". La recherche BM25 seule rate la sémantique : "machine qui claque" ≠ "bruit anormal moteur". Il faut les deux, fusionnés.</p>
+      <pre style="font-size:11px;">// Reciprocal Rank Fusion (RRF)
+score_final =
+  0.6 × score_vecteur_cosine
++ 0.4 × score_BM25_fulltext</pre>
+    </div>
+
+    <div class="card">
+      <h3>👍 Feedback loop</h3>
+      <p style="font-size:12px;">Un 👎 Telegram est la donnée la plus précieuse du système. Actuellement ces signaux sont perdus. En les capturant, on peut identifier les fiches mal indexées, les chunks mal découpés, les questions non couvertes — sans aucun effort supplémentaire des opérateurs.</p>
+      <ul class="dot">
+        <li>Signal explicite : bouton 👍/👎 après chaque réponse</li>
+        <li>Signal implicite : relance de la même question = insatisfaction</li>
+        <li>Sortie : dashboard lacunes + re-ranking par utilité</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🛡 Détection d'incertitude</h3>
+      <p style="font-size:12px;">Si les chunks récupérés ont un score de similarité faible, le LLM va halluciner une réponse plausible au lieu de dire "je ne sais pas". Les deux systèmes n'ont aucun seuil de confiance sur le retrieval.</p>
+      <pre style="font-size:11px;">// Garde-fou à ajouter
+if (max_similarity_score &lt; 0.72) {
+  return "Je n'ai pas de fiche sur ce sujet.
+  Voulez-vous créer un dossier ?"
+}</pre>
+    </div>
+
+    <div class="card">
+      <h3>⚙️ Prompt versioning</h3>
+      <p style="font-size:12px;">Les prompts sont dans les nœuds n8n, non versionnés, non testables. Modifier un prompt sans version de référence rend toute régression impossible à identifier. Nicolas a partiellement résolu ça avec les fichiers MD de prompts, mais sans lien formel avec les nœuds.</p>
+      <ul class="dot">
+        <li>Un fichier par prompt, versionné git</li>
+        <li>Numéro de version stocké dans le nœud n8n</li>
+        <li>Golden dataset rejoué après chaque modification de prompt</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 5 — DETTE TECHNIQUE -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="dette">
+  <div class="section-label">Section 5</div>
+  <h2>Dette technique à solder avant tout sprint commun</h2>
+  <p>Ces points bloquants doivent être résolus en priorité — ils conditionnent la stabilité de tout ce qui vient après.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dette</th><th>Projet</th><th>Risque</th><th>Effort</th></tr></thead>
+      <tbody>
+        <tr><td>Credential placeholder <code>REPLACE_WITH_CREDENTIAL_ID</code> dans rechercher_bible</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">RAG non fonctionnel</span></td><td>1h</td></tr>
+        <tr><td>Pipeline alimentation embeddings BigQuery non connecté</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">Recherche vectorielle inutilisable</span></td><td>1–2 jours</td></tr>
+        <tr><td>Aucun error handler sur les nœuds HTTP</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-red">Pertes silencieuses en prod</span></td><td>1 jour</td></tr>
+        <tr><td>Pas d'environnement DEV</td><td><span class="pill pill-purple">Vianney</span></td><td><span class="pill pill-yellow">Chaque modif risque la prod</span></td><td>2h</td></tr>
+        <tr><td>Clés API en dur dans les nœuds (sprint 3a)</td><td><span class="pill pill-blue">Nicolas</span></td><td><span class="pill pill-yellow">Sécurité si repo public</span></td><td>2h</td></tr>
+        <tr><td>RAG keyword saturé à ~70 fiches</td><td><span class="pill pill-blue">Nicolas</span></td><td><span class="pill pill-yellow">Dégradation qualité imminente</span></td><td>1 sprint</td></tr>
+        <tr><td>Sprint Text-Only non testé en prod</td><td><span class="pill pill-blue">Nicolas</span></td><td><span class="pill pill-yellow">Potentiel blocage pipeline</span></td><td>1h test</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 6 — TROIS SCÉNARIOS -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="scenarios">
+  <div class="section-label">Section 6</div>
+  <h2>Trois scénarios d'évolution</h2>
+
+  <!-- SCÉNARIO A -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="scenario-header">
+      <div class="scenario-badge badge-a">A</div>
+      <div class="scenario-meta">
+        <div class="scenario-title">Évolution incrémentale — Partir de Nicolas</div>
+        <div class="scenario-subtitle">4–6 semaines · Risque faible · Récompense modérée</div>
+      </div>
+    </div>
+    <p>Greffer un moteur vectoriel sur la base existante de Nicolas sans changer l'architecture ni interrompre la production.</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <h4>Ce qu'on fait</h4>
+        <ul class="check">
+          <li>Remplacer le RAG mots-clés par Supabase pgvector</li>
+          <li>Ajouter un pipeline d'embedding automatique (n8n → Gemini embedding-001 → Supabase)</li>
+          <li>Chunking sémantique par section (procédure / symptôme / cause)</li>
+          <li>Garder toute l'architecture existante</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Ce qu'on n'a toujours pas</h4>
+        <ul class="cross">
+          <li>Architecture multi-agents</li>
+          <li>Score de confiance</li>
+          <li>Feedback loop opérationnel</li>
+          <li>Évaluation de qualité</li>
+        </ul>
+      </div>
+    </div>
+    <div class="alert alert-blue" style="margin-top:12px;">
+      <div class="alert-title">Quand choisir A</div>
+      <p>Si l'urgence est uniquement la scalabilité du RAG de Nicolas et que Vianney peut attendre. Bon choix si les deux projets restent séparés.</p>
+    </div>
+  </div>
+
+  <!-- SCÉNARIO B -->
+  <div class="card card-green" style="margin-bottom:24px;">
+    <div class="scenario-header">
+      <div class="scenario-badge badge-b">B</div>
+      <div class="scenario-meta">
+        <div class="scenario-title">Convergence — Le meilleur des deux mondes ⭐ Recommandé</div>
+        <div class="scenario-subtitle">8–12 semaines · Risque modéré · Récompense élevée</div>
+      </div>
+    </div>
+    <p>Fusionner les deux projets en une infrastructure unifiée. Base opérationnelle de Nicolas + architecture agents de Vianney + vrai moteur vectoriel + ce qui manque aux deux.</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <h4>Ce qu'on prend de Nicolas</h4>
+        <ul class="check">
+          <li>DevOps complet (PROD/DEV + scripts + rollback)</li>
+          <li>Méthode de développement (METHODE_TRAVAIL_CLAUDE.md)</li>
+          <li>Pipeline ingestion Gemini Files API éprouvé</li>
+          <li>Error handlers sur tous les nœuds critiques</li>
+          <li>Mémoire conversationnelle Telegram</li>
+          <li>Documentation exhaustive</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Ce qu'on prend de Vianney</h4>
+        <ul class="check">
+          <li>Architecture multi-agents (Superviseur → sous-agents)</li>
+          <li>Pattern agentTool / toolWorkflow / $fromAI()</li>
+          <li>Score de confiance automatique par fiche</li>
+          <li>Organisation Drive auto-gérée par l'IA</li>
+          <li>Ingestion binaire directe (PDF, audio)</li>
+        </ul>
+      </div>
+    </div>
+    <h4 style="margin-top:16px;">Ce qu'on ajoute (absent des deux)</h4>
+    <div class="grid-2">
+      <ul class="check">
+        <li>Chunking sémantique par section</li>
+        <li>Supabase pgvector (remplace BigQuery et mots-clés)</li>
+        <li>Hybrid search BM25 + vectoriel + RRF fusion</li>
+      </ul>
+      <ul class="check">
+        <li>Golden dataset 20–30 questions + évaluation automatique</li>
+        <li>Feedback 👍/👎 Telegram → réinjection ranking</li>
+        <li>Détection d'incertitude (seuil similarité)</li>
+      </ul>
+    </div>
+    <div class="alert alert-green" style="margin-top:12px;">
+      <div class="alert-title">⭐ Recommandé — Pourquoi</div>
+      <p>C'est le seul scénario qui capitalise sur les 15+ sprints de Nicolas sans les jeter, intègre l'architecture plus avancée de Vianney, et ajoute les fondations manquantes aux deux. Il prépare aussi la migration vers Gemini Embedding 2 dès sa sortie GA.</p>
+    </div>
+  </div>
+
+  <!-- SCÉNARIO C -->
+  <div class="card" style="margin-bottom:24px;">
+    <div class="scenario-header">
+      <div class="scenario-badge badge-c">C</div>
+      <div class="scenario-meta">
+        <div class="scenario-title">Greenfield avec microservice RAG dédié</div>
+        <div class="scenario-subtitle">16–20 semaines · Risque élevé · Récompense maximale</div>
+      </div>
+    </div>
+    <p>n8n reste uniquement pour les déclencheurs et les intégrations (Airtable, Telegram, Drive). Toute la logique RAG est extraite dans un microservice Python avec une API REST.</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <h4>Avantages</h4>
+        <ul class="check">
+          <li>Logique RAG testable unitairement (pytest)</li>
+          <li>Évaluation RAGAS automatique (faithfulness, relevancy, context precision)</li>
+          <li>Observabilité complète (Langfuse — chaque requête tracée)</li>
+          <li>Indépendant du cloud (Qdrant self-hosted, open source)</li>
+          <li>CI/CD IA avec tests de régression automatiques</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Pourquoi pas maintenant</h4>
+        <ul class="cross">
+          <li>Requiert des compétences Python non acquises</li>
+          <li>Nouveau service à déployer et maintenir</li>
+          <li>4+ mois sans amélioration de la prod</li>
+          <li>Risque de sur-ingénierie pour le volume actuel</li>
+        </ul>
+      </div>
+    </div>
+    <div class="alert alert-yellow" style="margin-top:12px;">
+      <div class="alert-title">Décision future</div>
+      <p>Ce scénario est la cible à 12–18 mois si le volume dépasse 500 fiches ou si la complexité des agents le justifie. L'architecture du Scénario B doit anticiper cette migration en isolant la logique RAG dans des outils n8n clairement délimités.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 7 — STACK TECHNIQUE -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="stack">
+  <div class="section-label">Section 7</div>
+  <h2>Stack technique recommandée — Scénario B</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Couche</th><th>Composant</th><th>Choix</th><th>Justification</th></tr></thead>
+      <tbody>
+        <tr><td>ORCHESTRATION</td><td>Workflow engine</td><td><span class="pill pill-blue">n8n self-hosted</span></td><td>Déjà en place, maîtrisé, triggers + intégrations</td></tr>
+        <tr><td>AGENTS</td><td>Framework agents</td><td><span class="pill pill-blue">n8n LangChain nodes (agentTool)</span></td><td>Pattern Vianney éprouvé, zero infra supplémentaire</td></tr>
+        <tr><td>PERCEPTION</td><td>Analyse multimodale</td><td><span class="pill pill-blue">Gemini 2.5 Flash</span></td><td>Vidéo, photo, audio, PDF — déjà intégré</td></tr>
+        <tr><td>RAISONNEMENT</td><td>Structuration + Q&R</td><td><span class="pill pill-blue">Claude Sonnet 4</span></td><td>Meilleur pour structuration complexe et réponses nuancées</td></tr>
+        <tr><td>EMBEDDING (Phase 1)</td><td>Vectorisation texte</td><td><span class="pill pill-green">Gemini text-embedding-001</span></td><td>Stable, production-ready, même écosystème</td></tr>
+        <tr><td>EMBEDDING (Phase 2)</td><td>Vectorisation multimodale</td><td><span class="pill pill-cyan">Gemini Embedding 2</span></td><td>Dès GA — cross-modal vidéo+photo+texte</td></tr>
+        <tr><td>VECTOR DB</td><td>Stockage vecteurs</td><td><span class="pill pill-green">Supabase pgvector</span></td><td>SQL + vectoriel, déjà sur roadmap Nicolas, gratuit</td></tr>
+        <tr><td>RETRIEVAL</td><td>Recherche hybride</td><td><span class="pill pill-green">BM25 + pgvector + RRF</span></td><td>Termes exacts + sémantique + fusion — standard RAG prod</td></tr>
+        <tr><td>RERANKING</td><td>Re-classement</td><td><span class="pill pill-yellow">Cohere Rerank v3</span></td><td>API simple, meilleur reranker du marché, $1/1M tokens</td></tr>
+        <tr><td>DONNÉES STRUCTURÉES</td><td>Base opérationnelle</td><td><span class="pill pill-blue">Airtable</span></td><td>Interface technicien existante, conserver</td></tr>
+        <tr><td>FICHIERS</td><td>Stockage médias</td><td><span class="pill pill-blue">Google Drive</span></td><td>Organisation auto-gérée (pattern Vianney)</td></tr>
+        <tr><td>BOT</td><td>Interface opérateur</td><td><span class="pill pill-blue">Telegram</span></td><td>Vocal + texte, mémoire session, déjà utilisé</td></tr>
+        <tr><td>SÉCURITÉ</td><td>Clés API</td><td><span class="pill pill-yellow">Variables d'env n8n</span></td><td>Sprint 3a Nicolas — appliquer à tout le système</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-yellow" style="margin-top:8px;">
+    <div class="alert-title">Ce qu'on n'utilise pas — et pourquoi</div>
+    <p><strong>BigQuery VECTOR_SEARCH :</strong> surdimensionné pour &lt;10 000 chunks, coûteux, pipeline cassé — remplacé par Supabase pgvector. &nbsp;|&nbsp; <strong>LangGraph / CrewAI :</strong> complexité sans bénéfice à cette échelle. &nbsp;|&nbsp; <strong>Fine-tuning LLM :</strong> inutile avant d'avoir un RAG qui fonctionne. &nbsp;|&nbsp; <strong>Pinecone / Weaviate managed :</strong> Supabase couvre largement &lt;100 000 chunks.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 8 — ARCHITECTURE CIBLE -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="architecture">
+  <div class="section-label">Section 8</div>
+  <h2>Architecture cible — Scénario B</h2>
+
+  <h3>Pipeline d'ingestion</h3>
+  <div class="arch">
+    <div class="arch-label">Entrée opérateur</div>
+    <div class="arch-flow">
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">📋 Formulaire Airtable</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-blue">🔗 Webhook n8n</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-blue">🤖 Agent Superviseur</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">├──</div>
+        <div class="arch-node arch-node-purple">🔍 Agent Analyseur (agentTool)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">⚡ Gemini 2.5 Flash</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Transcription brute</div>
+      </div>
+      <div class="arch-row arch-indent" style="padding-left:64px;">
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-blue">✂️ Chunking sémantique</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-cyan">🔢 Gemini Embedding</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">🗄 Supabase pgvector</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">├──</div>
+        <div class="arch-node arch-node-purple">📁 Agent Organisationnel (agentTool)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Google Drive</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">└──</div>
+        <div class="arch-node arch-node-blue">📝 Claude Sonnet 4</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Fiche structurée Airtable</div>
+        <div class="arch-arrow">+</div>
+        <div class="arch-node arch-node-yellow">Score confiance 0–100</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Pipeline de retrieval (bot Telegram)</h3>
+  <div class="arch">
+    <div class="arch-label">Question opérateur</div>
+    <div class="arch-flow">
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">💬 Telegram (texte / vocal)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">⚡ Gemini Speech</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-cyan">🔢 Gemini Embedding</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">🗄 Supabase</div>
+        <div class="arch-node arch-node-gray" style="font-size:11px;">VECTOR cosine</div>
+        <div class="arch-arrow">+</div>
+        <div class="arch-node arch-node-gray" style="font-size:11px;">BM25 fulltext</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-yellow">🎯 RRF Fusion + Reranking</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Top 5 chunks</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-blue">🧠 Seuil confiance</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">score &lt; 0.72 → "Je ne sais pas"</div>
+      </div>
+      <div class="arch-row arch-indent">
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-blue">✍️ Claude Sonnet 4</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Réponse + sources</div>
+        <div class="arch-arrow">+</div>
+        <div class="arch-node arch-node-yellow">👍/👎 feedback</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Migration vers Gemini Embedding 2 (Phase 2)</h3>
+  <div class="arch">
+    <div class="arch-label">Cross-modal — dès la sortie GA du modèle</div>
+    <div class="arch-flow">
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">📷 Photo terrain</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-cyan">gemini-embedding-2</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">Supabase pgvector (table v2)</div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">🎥 Vidéo brute</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-cyan">gemini-embedding-2</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">Même espace vectoriel</div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">💬 "machine qui claque"</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-cyan">gemini-embedding-2</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Trouve vidéo + texte + photo pertinents</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-blue" style="margin-top:8px;">
+    <div class="alert-title">Stratégie de migration sans big bang</div>
+    <p>Supabase pgvector supporte plusieurs tables indépendantes. Phase 1 (text-embedding-001) et Phase 2 (Embedding 2) coexistent pendant la migration. On bascule progressivement sans jamais couper la production.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 9 — GEMINI EMBEDDING 2 -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="gemini2">
+  <div class="section-label">Section 9</div>
+  <h2>Gemini Embedding 2 — Analyse de l'opportunité</h2>
+
+  <div class="alert alert-cyan">
+    <div class="alert-title">⚡ Sorti le 10 mars 2026 — 3 jours avant cette analyse</div>
+    <p>Premier modèle d'embedding nativement multimodal. Texte, images, vidéos, audio et PDF dans un seul espace vectoriel unifié. C'est exactement le cas d'usage des deux projets.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Spécifications techniques</h3>
+      <ul class="dot">
+        <li>Model ID : <code>gemini-embedding-2-preview</code></li>
+        <li>Dimensions : 128 à 3 072 (Matryoshka MRL)</li>
+        <li>Recommandé : 768, 1536 ou 3072 dims</li>
+        <li>Input texte : 8 192 tokens (vs 2 048 pour embedding-001)</li>
+        <li>Multilingue : 100+ langues</li>
+        <li>Task types : RETRIEVAL_DOCUMENT, RETRIEVAL_QUERY, SEMANTIC_SIMILARITY, CLUSTERING…</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Limites médias (contraignantes)</h3>
+      <ul class="warn">
+        <li>Images : 6 par requête</li>
+        <li>Vidéo : 128 secondes max</li>
+        <li>Audio : 80 secondes max</li>
+        <li>PDF : 6 pages max</li>
+        <li>Statut : Preview — pas production-ready</li>
+        <li>Incompatible avec text-embedding-004 → re-embedding requis</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Ce que ça change concrètement</h3>
+  <div class="grid-2">
+    <div>
+      <h4>Avant (pipeline actuel)</h4>
+      <pre style="font-size:11px;">Vidéo → Gemini Flash (transcrit)
+     → Texte brut
+       → text-embedding-004
+         → Vecteur texte
+// 2 étapes, information perdue</pre>
+    </div>
+    <div>
+      <h4>Après (Phase 2)</h4>
+      <pre style="font-size:11px;">Vidéo → gemini-embedding-2
+     → Vecteur (même espace que texte)
+// 1 étape, information visuelle préservée</pre>
+    </div>
+  </div>
+
+  <div class="alert alert-blue">
+    <div class="alert-title">→ Décision recommandée</div>
+    <p><strong>Ne pas l'utiliser aujourd'hui.</strong> Les limites médias (128s vidéo, 6 pages PDF) sont trop contraignantes pour les cas d'usage réels. <strong>L'architecture à poser maintenant doit anticiper la migration :</strong> tables Supabase avec colonne <code>embedding_model_version</code>, pour basculer progressivement sans casser la prod dès que le modèle passe GA.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 10 — SOLUTIONS EXTERNES -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="externes">
+  <div class="section-label">Section 10</div>
+  <h2>Comparaison avec les solutions externes</h2>
+
+  <h3>Modèles d'embedding</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Modèle</th><th>Multimodal</th><th>Dims</th><th>Points forts</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Gemini Embedding 2</td>
+          <td><span class="pill pill-green">Texte+Image+Vidéo+Audio</span></td>
+          <td>128–3072 MRL</td>
+          <td>Cross-modal, même écosystème Gemini, MRL</td>
+          <td><span class="pill pill-yellow">Phase 2 dès GA</span></td>
+        </tr>
+        <tr>
+          <td>Gemini text-embedding-001</td>
+          <td><span class="pill pill-gray">Texte seul</span></td>
+          <td>128–3072 MRL</td>
+          <td>Stable, prod-ready, même écosystème</td>
+          <td><span class="pill pill-green">Phase 1 — choix</span></td>
+        </tr>
+        <tr>
+          <td>Voyage Multimodal 3 (Anthropic)</td>
+          <td><span class="pill pill-yellow">Texte+Image</span></td>
+          <td>1024</td>
+          <td>Meilleur MTEB retrieval du marché pour RAG technique</td>
+          <td><span class="pill pill-blue">Alternative solide</span></td>
+        </tr>
+        <tr>
+          <td>Cohere Embed v3</td>
+          <td><span class="pill pill-yellow">Texte+Image</span></td>
+          <td>1024</td>
+          <td>Très fort en retrieval, reranking natif, bon pour technique</td>
+          <td><span class="pill pill-blue">Alternative solide</span></td>
+        </tr>
+        <tr>
+          <td>OpenAI text-embedding-3-large</td>
+          <td><span class="pill pill-gray">Texte seul</span></td>
+          <td>256–3072 MRL</td>
+          <td>MTEB élevé, MRL, fiable, $0.13/M tokens</td>
+          <td><span class="pill pill-gray">Pas multimodal</span></td>
+        </tr>
+        <tr>
+          <td>Nomic Embed v2</td>
+          <td><span class="pill pill-gray">Texte seul</span></td>
+          <td>512–8192</td>
+          <td>Open source, self-hostable, gratuit, MRL</td>
+          <td><span class="pill pill-gray">Si budget contraint</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Matryoshka Representation Learning (MRL) — Pourquoi c'est important</h3>
+  <p>Les modèles avec MRL permettent de stocker une fois à haute dimension (3072) et de chercher à basse dimension (768) pour la vitesse. Le score de similarité est ensuite raffiné avec les dimensions complètes pour les top-K résultats. C'est une optimisation coût/qualité native — Gemini embedding-001 et Embedding 2 le supportent tous les deux.</p>
+
+  <div class="arch">
+    <div class="arch-label">Stratégie MRL recommandée</div>
+    <div class="arch-flow">
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">Ingestion</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">Stocker à 3072 dims</div>
+        <div class="arch-arrow">(une fois)</div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-node arch-node-gray">Retrieval</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-yellow">Chercher à 768 dims</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Top 20 résultats</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-green">Reranker à 3072 dims</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node arch-node-gray">Top 5 final</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 11 — PLAN DE SPRINTS -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="sprints">
+  <div class="section-label">Section 11</div>
+  <h2>Plan de sprints communs proposé</h2>
+  <p>Organisé en 3 phases. Chaque sprint suit la méthodologie Nicolas (backup → DEV → test → promotion PROD).</p>
+
+  <h3>Phase 0 — Dette technique (avant tout sprint commun)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sprint</th><th>Titre</th><th>Responsable</th><th>Durée</th><th>Priorité</th></tr></thead>
+      <tbody>
+        <tr class="sprint-row-p1"><td>V-0a</td><td>Brancher le credential dans rechercher_bible + tester RAG Vianney end-to-end</td><td>Vianney</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+        <tr class="sprint-row-p1"><td>V-0b</td><td>Error handlers sur tous les nœuds HTTP de Vianney</td><td>Vianney</td><td>1 jour</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+        <tr class="sprint-row-p1"><td>V-0c</td><td>Créer environnement DEV Vianney (dupliquer workflow + séparer PROD/DEV)</td><td>Vianney</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+        <tr class="sprint-row-p1"><td>N-0a</td><td>Sprint 3a Nicolas : clés API → variables d'environnement n8n</td><td>Nicolas</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+        <tr class="sprint-row-p1"><td>N-0b</td><td>Valider sprint Text-Only en production (tests dossier sans médias)</td><td>Nicolas</td><td>1h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Phase 1 — Fondations RAG v2 (sprints communs)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sprint</th><th>Titre</th><th>Livrable</th><th>Durée</th><th>Priorité</th></tr></thead>
+      <tbody>
+        <tr class="sprint-row-p1"><td>RAG-1</td><td>Supabase pgvector — setup schéma + pipeline d'embedding</td><td>Table <code>chunks</code> opérationnelle + n8n → embedding-001 → Supabase</td><td>2 jours</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p1"><td>RAG-2</td><td>Chunking sémantique des fiches existantes</td><td>Code node : 1 fiche → N chunks (titre / procédure / symptômes / causes / matériel)</td><td>1 jour</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p1"><td>RAG-3</td><td>Remplacement du RAG mots-clés de Nicolas par Supabase pgvector</td><td>Bot Nicolas utilise le retrieval vectoriel</td><td>1 jour</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p1"><td>RAG-4</td><td>Golden dataset 20 questions + évaluation initiale</td><td>Fichier JSON de référence + score de base mesuré</td><td>2h (humain)</td><td><span class="pill pill-red">P1</span></td></tr>
+        <tr class="sprint-row-p2"><td>RAG-5</td><td>Hybrid search BM25 + vectoriel + fusion RRF</td><td>Requête Supabase avec fulltext + vecteur + reranking RRF</td><td>1 jour</td><td><span class="pill pill-yellow">P2</span></td></tr>
+        <tr class="sprint-row-p2"><td>RAG-6</td><td>Seuil de confiance + réponse "je ne sais pas"</td><td>Score similarity &lt; 0.72 → message de redirection</td><td>2h</td><td><span class="pill pill-yellow">P2</span></td></tr>
+        <tr class="sprint-row-p2"><td>RAG-7</td><td>Intégration architecture agents Vianney dans pipeline Nicolas</td><td>Pattern agentTool Superviseur → Analyseur dans workflow Nicolas</td><td>2 jours</td><td><span class="pill pill-yellow">P2</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Phase 2 — Qualité et feedback (après Phase 1 stable)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sprint</th><th>Titre</th><th>Livrable</th><th>Durée</th></tr></thead>
+      <tbody>
+        <tr class="sprint-row-p2"><td>Q-1</td><td>Feedback 👍/👎 Telegram — capture + stockage</td><td>Bouton feedback + table Airtable Feedbacks</td><td>1 jour</td></tr>
+        <tr class="sprint-row-p2"><td>Q-2</td><td>Monitoring — alerte Telegram si pipeline échoue 2×</td><td>Sprint Bot-Mon Nicolas</td><td>1 jour</td></tr>
+        <tr class="sprint-row-p2"><td>Q-3</td><td>Reranking Cohere Rerank v3 (post hybrid search)</td><td>Appel Cohere API après top-20 Supabase</td><td>1 jour</td></tr>
+        <tr class="sprint-row-p3"><td>Q-4</td><td>Score confiance Vianney intégré dans Airtable commun</td><td>Champ score 0–100 dans fiches Nicolas + Vianney</td><td>2h</td></tr>
+        <tr class="sprint-row-p3"><td>GE-1</td><td>Veille Gemini Embedding 2 GA — migration table Supabase v2</td><td>Table chunks_v2 + re-embedding cross-modal</td><td>TBD</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 12 — DÉCISION À PRENDRE -->
+<!-- ══════════════════════════════════════════════ -->
+<section id="decision">
+  <div class="section-label">Section 12</div>
+  <h2>Décisions à prendre lors du sprint commun</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Valider le Scénario B comme direction commune</h3>
+        <p>Les deux projets convergent vers une infrastructure unifiée, ou restent parallèles avec des échanges ponctuels ? Le Scénario B est plus ambitieux mais produit un système plus solide et maintenable à long terme.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Choisir Supabase comme vector DB commune</h3>
+        <p>Remplacement de BigQuery (Vianney) et du RAG mots-clés (Nicolas) par Supabase pgvector. Instance unique, partagée, ou deux instances séparées par usage ? Supabase Free tier suffit pour &lt;500MB de vecteurs (~200 000 chunks).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Définir le schéma de chunking commun</h3>
+        <p>Les fiches des deux projets ont des structures différentes (torréfaction vs distributeurs). Un schéma commun de chunking par section est-il applicable aux deux, ou faut-il deux variantes ?</p>
+        <pre style="font-size:11px;">// Proposition de schéma universel
+{
+  chunk_id, fiche_id, projet,    // identifiants
+  section,                       // "titre" | "procedure" | "symptomes" | "causes" | "materiel" | "notes"
+  machine, type_intervention,    // métadonnées filtrables
+  contenu,                       // texte du chunk
+  vecteur[],                     // 768 ou 3072 dims
+  embedding_model_version,       // anticipe migration Embedding 2
+  score_confiance,               // 0-100 hérité de l'agent Superviseur
+  created_at
+}</pre>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Adopter la méthode de développement Nicolas pour les deux projets</h3>
+        <p>METHODE_TRAVAIL_CLAUDE.md + CLAUDE.md + structure de documentation → à appliquer au projet Vianney dès le premier sprint commun. Sans ça, la dette technique de Vianney se reconstituera sprint après sprint.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h3>Construire le golden dataset ensemble</h3>
+        <p>20–30 questions réelles avec réponses de référence — Nicolas et Vianney contribuent chacun leurs cas d'usage. C'est 2 heures de travail qui rendront chaque sprint futur mesurable.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="alert alert-green">
+    <div class="alert-title">Synthèse en une phrase</div>
+    <p>Deux POCs qui ont chacun résolu la moitié du problème : Nicolas a la fiabilité, Vianney a l'architecture — le sprint commun consiste à les faire se compléter plutôt que coexister, en ajoutant les fondations RAG qui manquent aux deux.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <span>Analyse Claude Code · 13 mars 2026 · Document de travail</span>
+  <span>Bibles Techniques — Bible Technique Nicolas × Bible Technique Vianney</span>
+</div>
+
+</main>
+
+<!-- Navigation scroll highlighting -->
+<script>
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.nav a');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.nav a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .nav { display: none; }
+  .main { margin-left: 0; padding: 32px; }
+}
+</body>
+</html>
