@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documents RAG v2 — Bibles Techniques</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0c0e16; --surface: #13161f; --surface2: #1a1d2a;
+  --border: #252836; --text: #e2e4ed; --text2: #9ca3af; --text3: #6b7280;
+  --blue: #3b82f6; --blue-dim: #1d3a6b; --blue-light: #60a5fa;
+  --green: #10b981; --green-dim: #0d2b1a; --green-light: #34d399;
+  --yellow: #f59e0b; --yellow-dim: #2b2000; --yellow-light: #fbbf24;
+  --red: #ef4444; --red-dim: #2b0d0d; --red-light: #f87171;
+  --purple: #8b5cf6; --purple-dim: #2e1a5e; --purple-light: #a78bfa;
+  --cyan: #06b6d4; --cyan-dim: #0c2a33; --cyan-light: #67e8f9;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+/* TOP NAV */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0; overflow-x: auto;
+  padding: 0 24px;
+}
+.topnav-logo { font-size: 12px; font-weight: 700; color: var(--text2); padding: 14px 20px 14px 0; border-right: 1px solid var(--border); margin-right: 16px; white-space: nowrap; }
+.topnav a {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 18px; font-size: 12px; font-weight: 600;
+  color: var(--text3); text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap; transition: all .15s;
+}
+.topnav a:hover { color: var(--text); }
+.topnav a.n1 { border-bottom-color: transparent; } .topnav a.n1:hover, .topnav a.n1.active { color: var(--blue-light); border-bottom-color: var(--blue); }
+.topnav a.n2 { } .topnav a.n2:hover, .topnav a.n2.active { color: var(--green-light); border-bottom-color: var(--green); }
+.topnav a.n3 { } .topnav a.n3:hover, .topnav a.n3.active { color: var(--yellow-light); border-bottom-color: var(--yellow); }
+.topnav-ext { margin-left: auto; display: flex; gap: 8px; padding-left: 16px; border-left: 1px solid var(--border); }
+.topnav-ext a { color: var(--text3); font-size: 11px; border: none; }
+.topnav-ext a:hover { color: var(--text); border: none; }
+
+/* HERO */
+.hero { padding: 56px 64px 40px; border-bottom: 1px solid var(--border); max-width: 1100px; margin: 0 auto; }
+.hero-eyebrow { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.hero h1 { font-size: 30px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+.hero-sub { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+.hero-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+.hero-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.pill-1 { background: var(--blue-dim); color: var(--blue-light); border: 1px solid rgba(59,130,246,.3); }
+.pill-2 { background: var(--green-dim); color: var(--green-light); border: 1px solid rgba(16,185,129,.3); }
+.pill-3 { background: var(--yellow-dim); color: var(--yellow-light); border: 1px solid rgba(245,158,11,.3); }
+
+/* CONTENT */
+.content { max-width: 860px; margin: 0 auto; padding: 0 64px 80px; }
+
+/* DOCUMENT SECTIONS */
+.doc-section { padding: 48px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 56px; }
+.doc-section:last-child { border-bottom: none; }
+.doc-num { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.doc-num-bar { height: 2px; width: 24px; border-radius: 2px; }
+.bar-1 { background: var(--blue); }
+.bar-2 { background: var(--green); }
+.bar-3 { background: var(--yellow); }
+.doc-title { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.doc-meta { font-size: 12px; color: var(--text3); margin-bottom: 32px; }
+
+/* PROSE */
+.prose h2 { font-size: 18px; font-weight: 700; color: #fff; margin: 32px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.prose h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 22px 0 8px; }
+.prose p { font-size: 13.5px; color: var(--text2); margin-bottom: 12px; line-height: 1.7; }
+.prose strong { color: var(--text); font-weight: 600; }
+.prose code { font-family: 'Cascadia Code','Fira Code',monospace; font-size: 12px; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--blue-light); }
+.prose pre { background: #080a10; border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; font-family: 'Cascadia Code','Fira Code',monospace; font-size: 12px; color: #c9d1d9; overflow-x: auto; margin: 14px 0; line-height: 1.6; }
+.prose hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+.prose blockquote { border-left: 3px solid var(--border); padding: 8px 16px; margin: 12px 0; }
+.prose blockquote p { font-size: 12px; color: var(--text3); font-style: italic; margin: 0; }
+
+/* LISTS */
+.prose ul { list-style: none; margin: 10px 0 14px; }
+.prose ul li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 3px 0; }
+.prose ul li::before { content: "·"; color: var(--text3); font-size: 18px; line-height: 1.2; flex-shrink: 0; }
+.prose ol { margin: 10px 0 14px; padding-left: 20px; }
+.prose ol li { font-size: 13px; color: var(--text2); padding: 3px 0; line-height: 1.6; }
+.check-list { list-style: none; margin: 10px 0 14px; }
+.check-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text2); padding: 3px 0; }
+.check-list li .icon-ok  { color: var(--green-light); flex-shrink: 0; font-weight: 700; }
+.check-list li .icon-no  { color: var(--red-light); flex-shrink: 0; font-weight: 700; }
+.check-list li .icon-warn{ color: var(--yellow-light); flex-shrink: 0; }
+
+/* TABLES */
+.table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 10px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: var(--surface2); }
+thead th { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); text-align: left; border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 10px 14px; font-size: 12.5px; color: var(--text2); vertical-align: middle; }
+td:first-child { color: var(--text3); font-size: 11px; font-weight: 600; }
+
+/* PILLS */
+.pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.pill-green  { background: var(--green-dim); color: var(--green-light); }
+.pill-yellow { background: var(--yellow-dim); color: var(--yellow-light); }
+.pill-red    { background: var(--red-dim); color: var(--red-light); }
+.pill-blue   { background: var(--blue-dim); color: var(--blue-light); }
+.pill-gray   { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+/* ALERT */
+.alert { border-radius: 10px; padding: 14px 18px; margin: 16px 0; border-left: 3px solid; }
+.alert-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+.alert p { margin: 0; font-size: 13px; }
+.alert-blue { background: rgba(59,130,246,.07); border-color: var(--blue); } .alert-blue .alert-title { color: var(--blue-light); }
+.alert-green { background: rgba(16,185,129,.07); border-color: var(--green); } .alert-green .alert-title { color: var(--green-light); }
+.alert-yellow { background: rgba(245,158,11,.07); border-color: var(--yellow); } .alert-yellow .alert-title { color: var(--yellow-light); }
+.alert-red { background: rgba(239,68,68,.07); border-color: var(--red); } .alert-red .alert-title { color: var(--red-light); }
+.alert-purple { background: rgba(139,92,246,.07); border-color: var(--purple); } .alert-purple .alert-title { color: var(--purple-light); }
+.alert-cyan { background: rgba(6,182,212,.07); border-color: var(--cyan); } .alert-cyan .alert-title { color: var(--cyan-light); }
+
+/* SPRINT CARDS */
+.sprint-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.sprint-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sprint-id { font-size: 12px; font-weight: 800; font-family: monospace; }
+.sprint-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.sprint-meta { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.sprint-deliverables { list-style: none; }
+.sprint-deliverables li { font-size: 12px; color: var(--text2); padding: 2px 0; display: flex; gap: 6px; }
+.sprint-deliverables li::before { content: "→"; color: var(--text3); flex-shrink: 0; }
+
+/* SCENARIO CARDS */
+.scenario { border-radius: 12px; border: 1px solid var(--border); padding: 20px 22px; margin: 14px 0; }
+.scenario-a { border-top: 2px solid var(--blue); }
+.scenario-b { border-top: 2px solid var(--green); background: rgba(16,185,129,.03); }
+.scenario-c { border-top: 2px solid var(--purple); }
+.scenario-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.scenario-badge { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; flex-shrink: 0; }
+.badge-a { background: rgba(59,130,246,.15); color: var(--blue-light); }
+.badge-b { background: rgba(16,185,129,.15); color: var(--green-light); }
+.badge-c { background: rgba(139,92,246,.15); color: var(--purple-light); }
+.scenario-name { font-size: 14px; font-weight: 700; color: #fff; }
+.scenario-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.mini-card-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+
+/* FOOTER */
+footer { text-align: center; font-size: 11px; color: var(--text3); padding: 24px; border-top: 1px solid var(--border); }
+
+/* PRINT */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .topnav { display: none; }
+  .content { padding: 0 32px 48px; }
+  .doc-section { page-break-inside: avoid; }
+}
+@media (max-width: 768px) {
+  .hero, .content { padding-left: 20px; padding-right: 20px; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-logo">Bibles Techniques — RAG v2</div>
+  <a href="#doc1" class="n1">01 · Analyse comparative</a>
+  <a href="#doc2" class="n2">02 · Conclusions & Stack</a>
+  <a href="#doc3" class="n3">03 · Plan de sprints</a>
+  <div class="topnav-ext">
+    <a href="analyse-rag-v2.html">→ Vue complète</a>
+    <a href="index.html">→ Infographie</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Documents de travail · 13 mars 2026</div>
+  <h1>RAG v2 — Vers une infrastructure unifiée</h1>
+  <div class="hero-sub">Préparation du sprint commun Nicolas × Vianney · Trois documents à lire dans l'ordre</div>
+  <div class="hero-pills">
+    <a href="#doc1" class="hero-pill pill-1">01 · Analyse comparative des deux projets</a>
+    <a href="#doc2" class="hero-pill pill-2">02 · Recommandations & stack technique</a>
+    <a href="#doc3" class="hero-pill pill-3">03 · Plan de sprints détaillé</a>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══════════════════════════════════ -->
+<!-- DOC 1 — ANALYSE COMPARATIVE -->
+<!-- ═══════════════════════════════════ -->
+<div class="doc-section" id="doc1">
+  <div class="doc-num"><div class="doc-num-bar bar-1"></div>Document 01</div>
+  <div class="doc-title">Analyse comparative — Bibles Techniques</div>
+  <div class="doc-meta">Document de travail · 13 mars 2026 · Préparation sprint commun Nicolas × Vianney</div>
+
+  <div class="prose">
+
+    <div class="alert alert-green">
+      <div class="alert-title">✓ Ce qui a été réussi — commun aux deux</div>
+      <p>Les deux projets ont résolu le problème difficile : capturer de la connaissance technique multimodale (vidéo, photo, audio, PDF) et la rendre interrogeable en langage naturel. C'est le cœur du problème, et il est résolu dans les deux cas.</p>
+    </div>
+
+    <h2>Bible Technique Nicolas — Torréfaction BIBAL Av12</h2>
+    <p><strong>Statut :</strong> <span class="pill pill-green">En production — v1.0 stable depuis le 10/03/2026</span><br>
+    <strong>Métriques :</strong> 48 fiches · 196 médias · 15+ sprints · 25+ bugs documentés</p>
+
+    <h3>Architecture</h3>
+    <p>Pipeline déterministe avec 2 modèles IA :</p>
+    <ul>
+      <li><strong>Gemini 2.5 Flash</strong> — perception multimodale (vidéo, photo, audio, texte)</li>
+      <li><strong>Claude Sonnet 4</strong> — raisonnement et structuration (2 passes anti-troncature)</li>
+    </ul>
+    <p>Workflows n8n avec appels HTTP directs — paradigme <em>"pipeline IA"</em> plutôt qu'<em>"agents autonomes"</em>.</p>
+
+    <div class="grid-2">
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--green-light);">Forces</div>
+        <ul class="check-list">
+          <li><span class="icon-ok">✓</span> Pipeline ingestion multimodale éprouvé (Gemini Files API + polling + retry HEVC)</li>
+          <li><span class="icon-ok">✓</span> Architecture 2 passes Claude avec <code>staticData</code> — anti-troncature</li>
+          <li><span class="icon-ok">✓</span> <code>onError: continueErrorOutput</code> sur tous les nœuds HTTP critiques</li>
+          <li><span class="icon-ok">✓</span> PROD/DEV séparés + scripts promotion + rollback</li>
+          <li><span class="icon-ok">✓</span> Documentation exhaustive : 7 fichiers MD + méthode de travail</li>
+          <li><span class="icon-ok">✓</span> Analytics de lacunes automatiques</li>
+          <li><span class="icon-ok">✓</span> Mémoire conversationnelle Telegram</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--yellow-light);">Faiblesses</div>
+        <ul class="check-list">
+          <li><span class="icon-warn">⚠</span> RAG par mots-clés : limite réelle ~70 fiches avant dégradation</li>
+          <li><span class="icon-warn">⚠</span> Zéro chunking : 1 fiche = 1 bloc entier envoyé au LLM</li>
+          <li><span class="icon-warn">⚠</span> Aucune mesure de qualité des réponses</li>
+          <li><span class="icon-warn">⚠</span> Clés API en dur dans les nœuds</li>
+          <li><span class="icon-warn">⚠</span> Pas d'agents IA natifs (évolution planifiée)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Bible Technique Vianney — Distributeurs Bibal</h2>
+    <p><strong>Statut :</strong> <span class="pill pill-blue">Architecture posée — non déployée</span><br>
+    <strong>Périmètre :</strong> Distributeurs café, snack, fontaine · 6 workflows n8n · 3 agents IA</p>
+
+    <h3>Architecture multi-agents hiérarchiques</h3>
+    <ul>
+      <li><strong>Agent Superviseur</strong> — orchestration, score de confiance 0–100, JSON strict</li>
+      <li><strong>Agent Analyseur</strong> (agentTool) — 3 passes, 4 outils multimodaux</li>
+      <li><strong>Agent Organisationnel</strong> (agentTool) — gestion Drive, arborescence 3 niveaux</li>
+    </ul>
+    <p>Pattern <code>agentTool</code> / <code>toolWorkflow</code> / <code>$fromAI()</code> — les agents décident eux-mêmes des outils à appeler.</p>
+
+    <div class="grid-2">
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--green-light);">Forces</div>
+        <ul class="check-list">
+          <li><span class="icon-ok">✓</span> Architecture multi-agents propre et bien structurée</li>
+          <li><span class="icon-ok">✓</span> Score de confiance automatique 0–100 par fiche</li>
+          <li><span class="icon-ok">✓</span> BigQuery VECTOR_SEARCH — infrastructure déjà configurée</li>
+          <li><span class="icon-ok">✓</span> Organisation Drive auto-gérée par l'IA</li>
+          <li><span class="icon-ok">✓</span> Ingestion binaire directe (PDF, image, vidéo, audio)</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-title" style="color:var(--red-light);">Risques critiques</div>
+        <ul class="check-list">
+          <li><span class="icon-no">✗</span> Aucun error handler — pertes silencieuses garanties</li>
+          <li><span class="icon-no">✗</span> Pipeline embedding non connecté — RAG non fonctionnel</li>
+          <li><span class="icon-no">✗</span> Credential placeholder <code>REPLACE_WITH_CREDENTIAL_ID</code></li>
+          <li><span class="icon-no">✗</span> Pas d'environnement DEV</li>
+          <li><span class="icon-no">✗</span> Zéro documentation</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Comparatif technique</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Dimension</th><th style="color:var(--blue-light);">Nicolas</th><th style="color:var(--purple-light);">Vianney</th></tr></thead>
+        <tbody>
+          <tr><td>Statut</td><td><span class="pill pill-green">Production v1.0</span></td><td><span class="pill pill-blue">Architecture posée</span></td></tr>
+          <tr><td>Paradigme IA</td><td>Pipeline 2 modèles (Gemini + Claude)</td><td>Multi-agents hiérarchiques LangChain</td></tr>
+          <tr><td>Retrieval</td><td><span class="pill pill-yellow">Mots-clés · ~70 fiches max</span></td><td><span class="pill pill-yellow">Vectoriel BigQuery · non connecté</span></td></tr>
+          <tr><td>Chunking</td><td><span class="pill pill-red">Absent</span></td><td><span class="pill pill-red">Absent</span></td></tr>
+          <tr><td>Gestion d'erreur</td><td><span class="pill pill-green">Complète</span></td><td><span class="pill pill-red">Absente</span></td></tr>
+          <tr><td>Environnement DEV</td><td><span class="pill pill-green">PROD/DEV séparés</span></td><td><span class="pill pill-red">Workflow unique</span></td></tr>
+          <tr><td>Documentation</td><td><span class="pill pill-green">7 fichiers MD</span></td><td><span class="pill pill-red">Absente</span></td></tr>
+          <tr><td>Score confiance</td><td><span class="pill pill-gray">Absent</span></td><td><span class="pill pill-green">0–100 automatique</span></td></tr>
+          <tr><td>Évaluation qualité</td><td><span class="pill pill-red">Inexistante</span></td><td><span class="pill pill-red">Inexistante</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Ce qui manque aux deux projets</h2>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--red-light);">#1</span>
+        <span class="sprint-title">Chunking sémantique — levier de qualité n°1</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:8px;">1 fiche entière = 1 vecteur. La découpe par section (procédure / symptômes / causes) est la modification avec le plus fort impact : <strong>+30–50% de précision au retrieval</strong>, documenté dans la littérature RAG.</p>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--yellow-light);">#2</span>
+        <span class="sprint-title">Évaluation de la qualité — golden dataset</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);">Aucun système ne mesure si ses réponses sont bonnes. Sans mesure, chaque sprint est une amélioration dans le vide. Minimum viable : 20–30 questions réelles avec réponses de référence.</p>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--blue-light);">#3</span>
+        <span class="sprint-title">Hybrid Search — BM25 + vectoriel + RRF</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);">Le vectoriel seul rate les termes exacts ("erreur E47", "Av12"). BM25 seul rate la sémantique ("machine qui claque" ≠ "bruit anormal moteur"). Il faut les deux, fusionnés par Reciprocal Rank Fusion.</p>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--green-light);">#4</span>
+        <span class="sprint-title">Feedback loop 👍/👎 + Détection d'incertitude</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);">Un 👎 Telegram vaut plus qu'un sprint entier de tuning à l'aveugle. Et si les chunks récupérés ont un score faible, le LLM hallucine — un seuil de confiance (<code>score &lt; 0.72</code>) doit bloquer la réponse.</p>
+    </div>
+
+    <h2>Opportunité — Gemini Embedding 2 (sorti 10/03/2026)</h2>
+    <div class="alert alert-cyan">
+      <div class="alert-title">⚡ Premier modèle d'embedding nativement multimodal</div>
+      <p>Texte, images, vidéos, audio, PDF dans <strong>un seul espace vectoriel</strong>. Plus besoin de transcrire la vidéo avant l'embedding — on embedde directement le média. Model ID : <code>gemini-embedding-2-preview</code> · Dims : 128–3072 (MRL).</p>
+    </div>
+    <div class="alert alert-yellow">
+      <div class="alert-title">⚠ Limites actuelles en Preview</div>
+      <p>Vidéo : 128s max · Audio : 80s max · PDF : 6 pages max · Incompatible avec text-embedding-004 (re-embedding requis). <strong>Ne pas utiliser aujourd'hui.</strong> Anticiper la migration avec une colonne <code>embedding_model_version</code> dans BigQuery.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- DOC 2 — CONCLUSIONS -->
+<!-- ═══════════════════════════════════ -->
+<div class="doc-section" id="doc2">
+  <div class="doc-num"><div class="doc-num-bar bar-2"></div>Document 02</div>
+  <div class="doc-title">Conclusions & Recommandations — RAG v2</div>
+  <div class="doc-meta">Document de travail · 13 mars 2026</div>
+
+  <div class="prose">
+
+    <div class="alert alert-green">
+      <div class="alert-title">⭐ Recommandation principale : Scénario B — Convergence</div>
+      <p><strong>Ne pas repartir de zéro. Ne pas continuer en parallèle.</strong> Fusionner les deux projets : base opérationnelle de Nicolas + architecture agents de Vianney + BigQuery VECTOR_SEARCH (déjà configuré) + les fondations manquantes aux deux.</p>
+    </div>
+
+    <h2>Trois scénarios évalués</h2>
+
+    <div class="scenario scenario-a">
+      <div class="scenario-header">
+        <div class="scenario-badge badge-a">A</div>
+        <div><div class="scenario-name">Évolution incrémentale — Partir de Nicolas</div><div class="scenario-sub">4–6 semaines · Risque faible · Récompense modérée</div></div>
+      </div>
+      <p>Greffer BigQuery VECTOR_SEARCH sur la base Nicolas sans changer l'architecture.</p>
+      <ul class="check-list" style="margin-top:10px;">
+        <li><span class="icon-ok">✓</span> Résout la saturation RAG (~70 fiches)</li>
+        <li><span class="icon-no">✗</span> Pas d'agents IA, pas d'évaluation, pas de feedback loop</li>
+      </ul>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">À choisir si : urgence uniquement sur la scalabilité, projets restent séparés.</p>
+    </div>
+
+    <div class="scenario scenario-b">
+      <div class="scenario-header">
+        <div class="scenario-badge badge-b">B</div>
+        <div><div class="scenario-name">Convergence ⭐ Recommandé</div><div class="scenario-sub">8–12 semaines · Risque modéré · Récompense élevée</div></div>
+      </div>
+      <p>Fusionner les deux systèmes + ajouter les fondations manquantes aux deux.</p>
+      <ul class="check-list" style="margin-top:10px;">
+        <li><span class="icon-ok">✓</span> Capitalise sur 15+ sprints Nicolas sans les jeter</li>
+        <li><span class="icon-ok">✓</span> Intègre l'architecture avancée de Vianney</li>
+        <li><span class="icon-ok">✓</span> Pose les vraies fondations RAG (chunking, évaluation, hybrid search)</li>
+        <li><span class="icon-ok">✓</span> Prépare la migration Gemini Embedding 2</li>
+      </ul>
+    </div>
+
+    <div class="scenario scenario-c">
+      <div class="scenario-header">
+        <div class="scenario-badge badge-c">C</div>
+        <div><div class="scenario-name">Greenfield microservice RAG</div><div class="scenario-sub">16–20 semaines · Risque élevé · Récompense maximale</div></div>
+      </div>
+      <p>n8n pour les déclencheurs uniquement, tout le RAG dans un service Python (FastAPI + LlamaIndex).</p>
+      <ul class="check-list" style="margin-top:10px;">
+        <li><span class="icon-ok">✓</span> Testable, observable, évaluable avec RAGAS</li>
+        <li><span class="icon-no">✗</span> Compétences Python requises, 4+ mois sans amélioration prod</li>
+      </ul>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">À considérer dans 12–18 mois si volume &gt; 500 fiches.</p>
+    </div>
+
+    <h2>Stack technique validée</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Couche</th><th>Choix</th><th>Justification</th></tr></thead>
+        <tbody>
+          <tr><td>Orchestration</td><td>n8n self-hosted</td><td>Déjà en place, maîtrisé</td></tr>
+          <tr><td>Agents</td><td>n8n LangChain agentTool</td><td>Pattern Vianney éprouvé</td></tr>
+          <tr><td>Perception multimodale</td><td>Gemini 2.5 Flash</td><td>Déjà intégré</td></tr>
+          <tr><td>Raisonnement / Q&R</td><td>Claude Sonnet 4</td><td>Structuration complexe + réponses nuancées</td></tr>
+          <tr><td>Embedding Phase 1</td><td><span class="pill pill-green">Gemini text-embedding-001</span></td><td>Stable, production-ready</td></tr>
+          <tr><td>Embedding Phase 2</td><td><span class="pill pill-blue">Gemini Embedding 2</span></td><td>Dès GA — cross-modal vidéo+photo+texte</td></tr>
+          <tr><td>Vector DB</td><td><span class="pill pill-green">BigQuery VECTOR_SEARCH</span></td><td><strong>Déjà configuré</strong> — zéro nouvelle infrastructure</td></tr>
+          <tr><td>Retrieval</td><td>BigQuery fulltext + VECTOR_SEARCH + RRF</td><td>Hybrid search natif BigQuery</td></tr>
+          <tr><td>Reranking</td><td>Cohere Rerank v3</td><td>~$1/1M tokens</td></tr>
+          <tr><td>Données structurées</td><td>Airtable</td><td>Interface technicien existante</td></tr>
+          <tr><td>Fichiers</td><td>Google Drive auto-géré</td><td>Pattern Vianney</td></tr>
+          <tr><td>Bot</td><td>Telegram</td><td>Vocal + texte, mémoire session</td></tr>
+          <tr><td>Sécurité</td><td>Variables d'env n8n</td><td>Sprint 3a Nicolas — appliquer aux deux</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Architecture cible</h2>
+    <h3>Pipeline d'ingestion</h3>
+    <pre>Formulaire Airtable
+  → Webhook n8n
+    → Agent Superviseur (n8n LangChain)
+        ├── Agent Analyseur (agentTool)
+        │     → Gemini 2.5 Flash (multimodal)
+        │       → Chunking sémantique (Code node)
+        │         → Gemini embedding-001
+        │           → BigQuery VECTOR_SEARCH (table chunks)
+        ├── Agent Organisationnel (agentTool)
+        │     → Google Drive (arborescence auto)
+        └── Claude Sonnet 4
+              → Fiche structurée Airtable + Score confiance 0–100</pre>
+
+    <h3>Pipeline de retrieval (bot Telegram)</h3>
+    <pre>Question opérateur (texte ou vocal)
+  → Gemini Speech (si vocal)
+    → Gemini embedding-001 (vecteur question)
+      → BigQuery : VECTOR_SEARCH cosine + fulltext BM25
+        → Fusion RRF (top 20)
+          → Cohere Rerank v3 (top 5)
+            → Seuil confiance (score &lt; 0.72 → "Je ne sais pas")
+              → Claude Sonnet 4 (génération réponse)
+                → Réponse Telegram + bouton 👍/👎</pre>
+
+    <h3>Schéma table BigQuery chunks</h3>
+    <pre>chunk_id STRING,
+fiche_id STRING,
+projet STRING,            -- "nicolas" | "vianney"
+section STRING,           -- "titre" | "procedure" | "symptomes" | "causes" | "materiel"
+machine STRING,
+type_intervention STRING,
+contenu STRING,
+vecteur ARRAY&lt;FLOAT64&gt;,   -- 768 dims (Matryoshka)
+embedding_model_version STRING,  -- anticipe migration Embedding 2
+score_confiance INT64,    -- 0-100
+created_at TIMESTAMP</pre>
+
+    <h2>Leviers de qualité — par ordre d'impact</h2>
+    <ol>
+      <li><strong>Chunking sémantique par section</strong> — +30–50% précision retrieval</li>
+      <li><strong>Métadonnées au chunk</strong> — filtrage pré-retrieval réduit le bruit</li>
+      <li><strong>Hybrid search BM25 + vectoriel</strong> — couvre termes exacts ET sémantique</li>
+      <li><strong>Évaluation systématique</strong> — golden dataset 20–30 questions</li>
+      <li><strong>Feedback loop 👍/👎</strong> — signal terrain directement exploitable</li>
+    </ol>
+
+    <h2>Décisions à confirmer lors du sprint commun</h2>
+    <ol>
+      <li>Valider le Scénario B comme direction commune</li>
+      <li>Confirmer BigQuery comme vector DB unique (Nicolas + Vianney)</li>
+      <li>Définir le schéma de chunking commun aux deux projets</li>
+      <li>Adopter METHODE_TRAVAIL_CLAUDE.md pour les deux</li>
+      <li>Construire le golden dataset ensemble (20–30 questions réelles)</li>
+    </ol>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- DOC 3 — PLAN DE SPRINTS -->
+<!-- ═══════════════════════════════════ -->
+<div class="doc-section" id="doc3">
+  <div class="doc-num"><div class="doc-num-bar bar-3"></div>Document 03</div>
+  <div class="doc-title">Plan de sprints communs — RAG v2</div>
+  <div class="doc-meta">Nicolas × Vianney · À partir de mars 2026 · Méthode : METHODE_TRAVAIL_CLAUDE.md</div>
+
+  <div class="prose">
+
+    <div class="alert alert-blue">
+      <div class="alert-title">Règles non-négociables pour chaque sprint</div>
+      <p>1. Backup avant sprint · 2. Développer sur DEV, jamais sur PROD · 3. GET live avant tout PUT · 4. Test nominal + test de casse avant promotion · 5. Mettre à jour les MD en fin de sprint</p>
+    </div>
+
+    <h2>Phase 0 — Dette technique</h2>
+    <p>Ces points bloquent la suite. Aucun sprint commun ne peut démarrer proprement sans eux.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sprint</th><th>Titre</th><th>Qui</th><th>Effort</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td>V-0a</td><td>Brancher <code>REPLACE_WITH_CREDENTIAL_ID</code> dans rechercher_bible + test RAG</td><td>Vianney</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+          <tr><td>V-0b</td><td>Error handlers <code>onError</code> sur tous les nœuds HTTP</td><td>Vianney</td><td>1 jour</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+          <tr><td>V-0c</td><td>Créer environnement DEV (dupliquer workflow + PROD/DEV séparés)</td><td>Vianney</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+          <tr><td>V-0d</td><td>Documentation minimale (CLAUDE.md + STACK_TECHNIQUE.md)</td><td>Vianney</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+          <tr><td>N-0a</td><td>Sprint 3a : clés API → variables d'environnement n8n</td><td>Nicolas</td><td>2h</td><td><span class="pill pill-red">Bloquant</span></td></tr>
+          <tr><td>N-0b</td><td>Valider sprint Text-Only en production</td><td>Nicolas</td><td>1h</td><td><span class="pill pill-yellow">P2</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Phase 1 — Fondations RAG v2</h2>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--red-light);">RAG-1</span>
+        <span class="sprint-title">BigQuery — branchement pipeline embedding</span>
+        <span class="pill pill-red" style="margin-left:auto;">P1 · 1 jour</span>
+      </div>
+      <div class="sprint-meta">BigQuery VECTOR_SEARCH est déjà configuré. Le branchement <code>n8n → Gemini embedding → BigQuery INSERT</code> manque côté Nicolas.</div>
+      <ul class="sprint-deliverables">
+        <li>Table <code>chunks</code> créée dans BigQuery (schéma commun aux deux projets)</li>
+        <li>Workflow n8n : à chaque nouvelle fiche → Gemini embedding-001 → INSERT chunks</li>
+        <li>Test : requête VECTOR_SEARCH retourne des résultats pertinents</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--red-light);">RAG-2</span>
+        <span class="sprint-title">Chunking sémantique des fiches</span>
+        <span class="pill pill-red" style="margin-left:auto;">P1 · 1 jour</span>
+      </div>
+      <div class="sprint-meta">1 fiche = 1 vecteur actuellement. La découpe par section multiplie la précision de retrieval.</div>
+      <ul class="sprint-deliverables">
+        <li>Code node n8n : 1 fiche → N chunks (titre / procédure / symptômes / causes / matériel / notes)</li>
+        <li>Métadonnées au chunk : <code>machine</code>, <code>section</code>, <code>score_confiance</code>, <code>embedding_model_version</code></li>
+        <li>Re-embedding des 48 fiches Nicolas existantes</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--red-light);">RAG-3</span>
+        <span class="sprint-title">Remplacement RAG mots-clés Nicolas</span>
+        <span class="pill pill-red" style="margin-left:auto;">P1 · 1 jour</span>
+      </div>
+      <div class="sprint-meta">Le bot Nicolas fait GET ALL fiches → filtre mots-clés → Claude. Saturation à ~70 fiches.</div>
+      <ul class="sprint-deliverables">
+        <li>Nœud retrieval remplacé : question → embedding → BigQuery VECTOR_SEARCH → top 5 chunks → Claude</li>
+        <li>Test sur golden dataset (RAG-4)</li>
+        <li>Vérification : qualité ≥ ancienne méthode sur les 20 questions de référence</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--red-light);">RAG-4</span>
+        <span class="sprint-title">Golden dataset — évaluation initiale</span>
+        <span class="pill pill-red" style="margin-left:auto;">P1 · 2h humain</span>
+      </div>
+      <div class="sprint-meta">Sans mesure de base, on ne sait pas si on améliore ou on dégrade. Ce sprint est du travail humain — Nicolas et Vianney ensemble.</div>
+      <ul class="sprint-deliverables">
+        <li>Fichier <code>golden_dataset.json</code> : 20–30 questions réelles (10 Nicolas + 10 Vianney + 10 communes)</li>
+        <li>Format : <code>{ question, reponse_reference, fiche_source, section_attendue }</code></li>
+        <li>Score de base mesuré : taux de retrieval correct + qualité réponse LLM-as-judge</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--yellow-light);">RAG-5</span>
+        <span class="sprint-title">Hybrid search BM25 + vectoriel + RRF</span>
+        <span class="pill pill-yellow" style="margin-left:auto;">P2 · 1 jour</span>
+      </div>
+      <ul class="sprint-deliverables">
+        <li>Requête BigQuery combinant <code>VECTOR_SEARCH</code> cosine + fulltext search</li>
+        <li>Fusion RRF : <code>score_final = 0.6 × score_vecteur + 0.4 × score_BM25</code></li>
+        <li>Benchmark sur golden dataset : hybrid vs vectoriel seul</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--yellow-light);">RAG-6</span>
+        <span class="sprint-title">Seuil de confiance + "je ne sais pas"</span>
+        <span class="pill pill-yellow" style="margin-left:auto;">P2 · 2h</span>
+      </div>
+      <ul class="sprint-deliverables">
+        <li>Code node : si <code>max_similarity_score &lt; 0.72</code> → message de redirection + suggestion de créer un dossier</li>
+        <li>Test avec questions hors-sujet</li>
+      </ul>
+    </div>
+
+    <div class="sprint-card">
+      <div class="sprint-card-header">
+        <span class="sprint-id" style="color:var(--yellow-light);">RAG-7</span>
+        <span class="sprint-title">Intégration agents Vianney dans pipeline Nicolas</span>
+        <span class="pill pill-yellow" style="margin-left:auto;">P2 · 2 jours</span>
+      </div>
+      <div class="sprint-meta">Nicolas utilise des appels HTTP directs. Migrer vers le pattern <code>agentTool</code> de Vianney.</div>
+      <ul class="sprint-deliverables">
+        <li>Agent Superviseur dans workflow Nicolas</li>
+        <li>Agent Analyseur avec 4 outils (vidéo, photo, PDF, audio) en agentTool</li>
+        <li>Score de confiance 0–100 écrit dans Airtable</li>
+        <li>Benchmark qualité fiches : avant/après sur 5 dossiers tests</li>
+      </ul>
+    </div>
+
+    <h2>Phase 2 — Qualité et feedback</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sprint</th><th>Titre</th><th>Livrable</th><th>Durée</th></tr></thead>
+        <tbody>
+          <tr><td>Q-1</td><td>Feedback 👍/👎 Telegram</td><td>Bouton post-réponse + table Airtable Feedbacks + dashboard lacunes</td><td>1 jour</td></tr>
+          <tr><td>Q-2</td><td>Monitoring pipeline</td><td>Alerte Telegram si pipeline échoue 2× consécutifs</td><td>1 jour</td></tr>
+          <tr><td>Q-3</td><td>Reranking Cohere Rerank v3</td><td>Appel Cohere API après top-20 BigQuery → top-5 reranké</td><td>1 jour</td></tr>
+          <tr><td>Q-4</td><td>Score confiance commun</td><td>Champ score 0–100 dans fiches Nicolas ET Vianney</td><td>2h</td></tr>
+          <tr><td>GE-1</td><td>Migration Gemini Embedding 2</td><td>Table <code>chunks_v2</code> BigQuery + re-embedding cross-modal (dès GA)</td><td>TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Tableau de suivi</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Sprint</th><th>Statut</th><th>Date</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>V-0a</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>V-0b</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>V-0c</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>V-0d</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>N-0a</td><td>⏳ À faire</td><td>—</td><td>Sprint 3a déjà planifié</td></tr>
+          <tr><td>N-0b</td><td>⏳ À faire</td><td>—</td><td>Text-Only déjà sur DEV</td></tr>
+          <tr><td>RAG-1</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>RAG-2</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>RAG-3</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>RAG-4</td><td>⏳ À faire</td><td>—</td><td>2h humain — à faire ensemble</td></tr>
+          <tr><td>RAG-5</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>RAG-6</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+          <tr><td>RAG-7</td><td>⏳ À faire</td><td>—</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<footer>Documents RAG v2 · Bibles Techniques · 13 mars 2026</footer>
+
+<script>
+// Active nav link on scroll
+const sections = [document.getElementById('doc1'), document.getElementById('doc2'), document.getElementById('doc3')];
+const links = document.querySelectorAll('.topnav a:not(.topnav-ext a)');
+window.addEventListener('scroll', () => {
+  let cur = 0;
+  sections.forEach((s, i) => { if (window.scrollY >= s.offsetTop - 80) cur = i; });
+  links.forEach(l => l.classList.remove('active'));
+  if (links[cur]) links[cur].classList.add('active');
+});
+</script>
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .topnav { display: none; }
+}
+</body>
+</html>
