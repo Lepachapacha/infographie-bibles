@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparatif — Bibles Techniques</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e8eaf0;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .header .label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  /* MAIN GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 0;
+    max-width: 960px;
+    margin: 0 auto 48px;
+  }
+
+  /* CARDS */
+  .card {
+    background: #1a1d27;
+    border-radius: 16px;
+    padding: 28px 24px;
+    border: 1px solid #2a2d3a;
+  }
+  .card-nicolas { border-top: 3px solid #3b82f6; }
+  .card-vianney { border-top: 3px solid #8b5cf6; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .avatar-n { background: #1d3a6b; color: #60a5fa; }
+  .avatar-v { background: #2e1a5e; color: #a78bfa; }
+  .card-name { font-size: 16px; font-weight: 700; color: #fff; }
+  .card-context { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+  /* STATUS BADGE */
+  .status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .5px;
+    padding: 4px 10px; border-radius: 20px;
+    margin-bottom: 18px;
+  }
+  .status-prod { background: #0d2b1a; color: #34d399; border: 1px solid #065f46; }
+  .status-dev  { background: #2d1a4a; color: #c084fc; border: 1px solid #6d28d9; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-green { background: #34d399; }
+  .dot-purple { background: #c084fc; }
+
+  /* METRICS ROW */
+  .metrics {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 20px;
+  }
+  .metric {
+    background: #0f1117;
+    border-radius: 10px; padding: 12px;
+    text-align: center;
+  }
+  .metric-value {
+    font-size: 22px; font-weight: 800;
+    line-height: 1;
+  }
+  .metric-value-n { color: #60a5fa; }
+  .metric-value-v { color: #a78bfa; }
+  .metric-label { font-size: 10px; color: #6b7280; margin-top: 4px; }
+
+  /* IA CALLOUT */
+  .ia-callout {
+    background: linear-gradient(135deg, #0d1f3a 0%, #0d1a2e 100%);
+    border: 1px solid #1e3a5a;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .ia-callout-title {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: #60a5fa; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .ia-callout-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .ia-model {
+    background: #0a1520; border-radius: 8px; padding: 10px 12px;
+    border: 1px solid #1e3a5a;
+  }
+  .ia-model-name {
+    font-size: 11px; font-weight: 700; color: #93c5fd; margin-bottom: 4px;
+  }
+  .ia-model-role {
+    font-size: 11px; color: #9ca3af; line-height: 1.4;
+  }
+  .ia-tagline {
+    font-size: 11px; color: #6b9fd4; font-style: italic;
+    margin-top: 10px; text-align: center;
+  }
+
+  /* FEATURE LIST */
+  .section-title {
+    font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: #6b7280;
+    margin-bottom: 10px;
+  }
+  .feature-list { list-style: none; margin-bottom: 18px; }
+  .feature-list li {
+    font-size: 12px; color: #d1d5db;
+    padding: 5px 0;
+    border-bottom: 1px solid #1e2130;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .feature-list li:last-child { border-bottom: none; }
+  .icon-ok  { color: #34d399; flex-shrink: 0; }
+  .icon-warn{ color: #f59e0b; flex-shrink: 0; }
+  .icon-no  { color: #ef4444; flex-shrink: 0; }
+
+  /* RISK BOX */
+  .risk-box {
+    border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .risk-n { background: #0d1f3a; border-left: 3px solid #3b82f6; }
+  .risk-v { background: #1e0d3a; border-left: 3px solid #ef4444; }
+  .risk-title { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .risk-title-n { color: #60a5fa; }
+  .risk-title-v { color: #f87171; }
+  .risk-text { font-size: 12px; color: #d1d5db; line-height: 1.5; }
+
+  /* NEXT STEP */
+  .next-box {
+    background: #0f1117; border-radius: 10px; padding: 12px 14px;
+    border: 1px dashed #2a2d3a;
+  }
+  .next-title { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; margin-bottom: 4px; }
+  .next-text { font-size: 12px; color: #d1d5db; line-height: 1.5; }
+
+  /* CENTER COLUMN */
+  .center-col {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding-top: 36px; gap: 0;
+  }
+  .vs-circle {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #1a1d27;
+    border: 2px solid #2a2d3a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #6b7280;
+    margin-bottom: 32px;
+  }
+
+  /* DIVIDER LINE */
+  .vline {
+    width: 1px; flex: 1;
+    background: linear-gradient(to bottom, #2a2d3a, transparent);
+  }
+
+  /* BOTTOM TABLE */
+  .compare-table {
+    max-width: 960px; margin: 0 auto 48px;
+    background: #1a1d27;
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid #2a2d3a;
+  }
+  .compare-table table {
+    width: 100%; border-collapse: collapse;
+  }
+  .compare-table thead tr {
+    background: #0f1117;
+  }
+  .compare-table thead th {
+    padding: 14px 18px;
+    font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #6b7280;
+    text-align: left;
+  }
+  .compare-table thead th:nth-child(2) { color: #60a5fa; }
+  .compare-table thead th:nth-child(3) { color: #a78bfa; }
+  .compare-table tbody tr {
+    border-top: 1px solid #1e2130;
+  }
+  .compare-table tbody tr:hover { background: #1e2233; }
+  .compare-table td {
+    padding: 11px 18px;
+    font-size: 12px; color: #d1d5db;
+    vertical-align: middle;
+  }
+  .compare-table td:first-child { color: #9ca3af; font-size: 11px; letter-spacing: .5px; }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .pill-green  { background: #0d2b1a; color: #34d399; }
+  .pill-yellow { background: #2b2000; color: #fbbf24; }
+  .pill-red    { background: #2b0d0d; color: #f87171; }
+  .pill-blue   { background: #0d1f3a; color: #60a5fa; }
+  .pill-purple { background: #1e0d3a; color: #c084fc; }
+  .pill-gray   { background: #1a1d27; color: #6b7280; border: 1px solid #2a2d3a; }
+
+  /* SENTENCE */
+  .sentence-block {
+    max-width: 960px; margin: 0 auto 40px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .sentence {
+    background: #1a1d27; border-radius: 12px;
+    padding: 20px 22px; border: 1px solid #2a2d3a;
+  }
+  .sentence-who {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .sentence-who-n { color: #3b82f6; }
+  .sentence-who-v { color: #8b5cf6; }
+  .sentence-text { font-size: 13px; color: #e8eaf0; line-height: 1.6; font-style: italic; }
+
+  /* FOOTER */
+  .footer { text-align: center; font-size: 11px; color: #374151; padding-top: 16px; }
+
+  /* PRINT — forcer les couleurs de fond */
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    body { padding: 20px 16px; }
+    .grid { grid-template-columns: 1fr 60px 1fr; }
+    .compare-table, .sentence-block { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="label">Analyse comparative — Mars 2026</div>
+  <h1>Deux Bibles Techniques, Une Vision Commune</h1>
+  <div class="subtitle">Capturer et transmettre la connaissance terrain par l'intelligence artificielle</div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+  <!-- NICOLAS -->
+  <div class="card card-nicolas">
+    <div class="card-header">
+      <div class="avatar avatar-n">N</div>
+      <div>
+        <div class="card-name">Bible Technique Nicolas</div>
+        <div class="card-context">Usine de Torréfaction · Petroncini BIBAL Av12</div>
+      </div>
+    </div>
+
+    <div class="status status-prod">
+      <div class="dot dot-green"></div>
+      EN PRODUCTION
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-value metric-value-n">48</div>
+        <div class="metric-label">Fiches produites</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-n">196</div>
+        <div class="metric-label">Médias traités</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-n">2</div>
+        <div class="metric-label">Modèles IA actifs</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-n">15+</div>
+        <div class="metric-label">Sprints réalisés</div>
+      </div>
+    </div>
+
+    <div class="ia-callout">
+      <div class="ia-callout-title">⚡ Intelligence embarquée</div>
+      <div class="ia-callout-grid">
+        <div class="ia-model">
+          <div class="ia-model-name">Gemini 2.5 Flash</div>
+          <div class="ia-model-role">Perception multimodale — transcrit vidéos, lit photos, comprend le contexte visuel</div>
+        </div>
+        <div class="ia-model">
+          <div class="ia-model-name">Claude Sonnet 4</div>
+          <div class="ia-model-role">Raisonnement et structuration — 2 passes anti-troncature, répond aux techniciens</div>
+        </div>
+      </div>
+      <div class="ia-tagline">Pipeline déterministe · intelligence dans chaque nœud · prêt pour agentique</div>
+    </div>
+
+    <div class="section-title">Ce qui fonctionne</div>
+    <ul class="feature-list">
+      <li><span class="icon-ok">✓</span> Gemini analyse vidéos/photos — 0 saisie manuelle</li>
+      <li><span class="icon-ok">✓</span> Claude structure &amp; répond — mémoire de session Telegram</li>
+      <li><span class="icon-ok">✓</span> Questions vocales transcrites par Gemini Speech</li>
+      <li><span class="icon-ok">✓</span> Analytics IA de lacunes — la base s'améliore seule</li>
+      <li><span class="icon-ok">✓</span> Gestion d'erreur robuste — aucune perte silencieuse</li>
+      <li><span class="icon-ok">✓</span> PROD/DEV séparés — déploiement sans risque</li>
+      <li><span class="icon-ok">✓</span> Documentation exhaustive — reprise en 30 min</li>
+      <li><span class="icon-ok">✓</span> Passage vers agents IA natifs planifié &amp; documenté</li>
+    </ul>
+
+    <div class="risk-box risk-n">
+      <div class="risk-title risk-title-n">⚡ Limite actuelle</div>
+      <div class="risk-text">Moteur de recherche par mots-clés : limite ~70 fiches. Premier signal de surcharge déjà rencontré à 48 fiches.</div>
+    </div>
+
+    <div class="next-box">
+      <div class="next-title">→ Prochaine étape</div>
+      <div class="next-text">Recherche vectorielle sémantique — "machine qui claque" trouve "bruit anormal moteur". Planifiée, estimée, s'intègre sans tout reconstruire.</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center-col">
+    <div class="vs-circle">VS</div>
+    <div class="vline"></div>
+  </div>
+
+  <!-- VIANNEY -->
+  <div class="card card-vianney">
+    <div class="card-header">
+      <div class="avatar avatar-v">V</div>
+      <div>
+        <div class="card-name">Bible Technique Vianney</div>
+        <div class="card-context">Distributeurs Bibal · Café · Snack · Fontaine</div>
+      </div>
+    </div>
+
+    <div class="status status-dev">
+      <div class="dot dot-purple"></div>
+      ARCHITECTURE POSÉE
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-value metric-value-v">3</div>
+        <div class="metric-label">Agents IA</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-v">6</div>
+        <div class="metric-label">Workflows n8n</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-v">4</div>
+        <div class="metric-label">Types de médias</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value metric-value-v">∞</div>
+        <div class="metric-label">Scalabilité RAG</div>
+      </div>
+    </div>
+
+    <div class="section-title">Architecture conçue</div>
+    <ul class="feature-list">
+      <li><span class="icon-ok">✓</span> Agent Superviseur + 2 sous-agents spécialisés</li>
+      <li><span class="icon-ok">✓</span> Score de confiance automatique par fiche</li>
+      <li><span class="icon-ok">✓</span> Organisation Drive créée &amp; maintenue par l'IA</li>
+      <li><span class="icon-ok">✓</span> Recherche vectorielle BigQuery (sémantique)</li>
+      <li><span class="icon-ok">✓</span> Formulaire simple pour le technicien</li>
+      <li><span class="icon-warn">⚠</span> Gestion d'erreur absente — pertes silencieuses</li>
+      <li><span class="icon-warn">⚠</span> Pipeline embeddings BigQuery non connecté</li>
+      <li><span class="icon-no">✗</span> Pas de PROD/DEV — risque en modification</li>
+    </ul>
+
+    <div class="risk-box risk-v">
+      <div class="risk-title risk-title-v">⚠ Risque principal</div>
+      <div class="risk-text">Aucun filet de sécurité. Si un upload échoue ou si l'IA produit une erreur, le système s'arrête silencieusement — sans que personne le sache.</div>
+    </div>
+
+    <div class="next-box">
+      <div class="next-title">→ Prochaine étape</div>
+      <div class="next-text">Sprint de fiabilisation : gestion d'erreur, environnement DEV, pipeline d'alimentation BigQuery. Indispensable avant tout déploiement à grande échelle.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARISON TABLE -->
+<div class="compare-table">
+  <table>
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th>Nicolas — Torréfaction</th>
+        <th>Vianney — Bibal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>STATUT</td>
+        <td><span class="pill pill-green">En production</span></td>
+        <td><span class="pill pill-purple">Architecture posée</span></td>
+      </tr>
+      <tr>
+        <td>ROBUSTESSE</td>
+        <td><span class="pill pill-green">Éprouvée — 15 sprints</span></td>
+        <td><span class="pill pill-yellow">Non testée en prod</span></td>
+      </tr>
+      <tr>
+        <td>RECHERCHE</td>
+        <td><span class="pill pill-yellow">Mots-clés · limite ~70 fiches</span></td>
+        <td><span class="pill pill-blue">Vectorielle · illimitée</span></td>
+      </tr>
+      <tr>
+        <td>PARADIGME IA</td>
+        <td><span class="pill pill-blue">Pipeline 2 modèles (Gemini + Claude)</span></td>
+        <td><span class="pill pill-purple">Multi-agents hiérarchiques (n8n LangChain)</span></td>
+      </tr>
+      <tr>
+        <td>GESTION D'ERREUR</td>
+        <td><span class="pill pill-green">Handlers sur nœuds critiques</span></td>
+        <td><span class="pill pill-red">Absente</span></td>
+      </tr>
+      <tr>
+        <td>MÉMOIRE BOT</td>
+        <td><span class="pill pill-green">Session conversationnelle</span></td>
+        <td><span class="pill pill-gray">Non implémentée</span></td>
+      </tr>
+      <tr>
+        <td>SUPPORT VOCAL</td>
+        <td><span class="pill pill-green">Oui — Telegram + Gemini</span></td>
+        <td><span class="pill pill-yellow">Prévu, non intégré</span></td>
+      </tr>
+      <tr>
+        <td>ANALYTICS LACUNES</td>
+        <td><span class="pill pill-green">Automatiques</span></td>
+        <td><span class="pill pill-gray">Absentes</span></td>
+      </tr>
+      <tr>
+        <td>ENVIRONNEMENT DEV</td>
+        <td><span class="pill pill-green">PROD / DEV séparés + scripts</span></td>
+        <td><span class="pill pill-red">Workflow unique</span></td>
+      </tr>
+      <tr>
+        <td>DOCUMENTATION</td>
+        <td><span class="pill pill-green">7 fichiers MD + méthodologie</span></td>
+        <td><span class="pill pill-red">Absente</span></td>
+      </tr>
+      <tr>
+        <td>ÉVOLUTIVITÉ</td>
+        <td><span class="pill pill-green">Très élevée — infra de dev propre</span></td>
+        <td><span class="pill pill-yellow">Moyenne — pas de méthode posée</span></td>
+      </tr>
+      <tr>
+        <td>SCALABILITÉ</td>
+        <td><span class="pill pill-yellow">Limite RAG à corriger</span></td>
+        <td><span class="pill pill-blue">Illimitée par design</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SENTENCES -->
+<div class="sentence-block">
+  <div class="sentence">
+    <div class="sentence-who sentence-who-n">Nicolas — Torréfaction</div>
+    <div class="sentence-text">Deux modèles IA en production — Gemini voit, Claude réfléchit — dans un pipeline éprouvé 196 médias. L'architecture est déterministe par choix, pas par limite : la migration vers des agents IA autonomes est planifiée, documentée, et ne nécessite pas de tout reconstruire.</div>
+  </div>
+  <div class="sentence">
+    <div class="sentence-who sentence-who-v">Vianney — Bibal</div>
+    <div class="sentence-text">Une architecture prometteuse et bien pensée, qui a besoin d'un sprint de fiabilisation avant d'être confiée à de vraies données de production — le potentiel est là, il manque le filet de sécurité.</div>
+  </div>
+</div>
+
+<div class="footer">Analyse Claude Code · Mars 2026</div>
+
+</body>
+</html>
